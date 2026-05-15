@@ -90,7 +90,7 @@ def insert_test_data():
             email=consignor_data['email'],
             phone_number=consignor_data['phone_number'],
             passport_data=consignor_data['passport_data'],
-            INN=consignor_data['INN'],
+            inn=consignor_data['INN'],
         )
         db.session.add(consignor)
     db.session.flush()
@@ -168,7 +168,7 @@ def add_consignor():
         email = request.form['email']
         phone_number = request.form['phone_number']
         passport_data = request.form['passport_data']
-        INN = request.form['INN']
+        inn = request.form['INN']
 
         new_consignor = Consignor(
             last_name=last_name,
@@ -177,7 +177,7 @@ def add_consignor():
             email=email,
             phone_number=phone_number,
             passport_data=passport_data,
-            INN=INN
+            inn=inn
         )
         db.session.add(new_consignor)
         db.session.commit()
@@ -206,7 +206,7 @@ def edit_consignor(consignor_id):
         consignor.email = request.form['email']
         consignor.phone_number = request.form['phone_number']
         consignor.passport_data = request.form['passport_data']
-        consignor.INN = request.form['INN']
+        consignor.inn = request.form['INN']
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
@@ -219,9 +219,7 @@ def edit_consignor(consignor_id):
 def delete_consignor(consignor_id):
     consignor = Consignor.query.get_or_404(consignor_id)
 
-    # Проверить, есть ли отчёт, связанный с этим комитентом
-    related_reports = Report.query.filter_by(consignor_id=consignor_id).all()
-    if related_reports:
+    if consignor.reports:
         flash('Комитента нельзя удалить, так как есть связанный с ним отчёт.', 'error')
         return redirect(url_for('consignors_list'))
     db.session.delete(consignor)
@@ -279,7 +277,7 @@ def add_report():
 @app.route('/report/<int:report_id>')
 def report_detail(report_id):
     report = Report.query.get_or_404(report_id)
-    consignor = Consignor.query.get(report.consignor_id)
+    consignor = report.consignor
 
     return render_template('reports/report_detail.html', report=report, consignor=consignor)
 
@@ -307,9 +305,7 @@ def edit_report(report_id):
 def delete_report(report_id):
     report = Report.query.get_or_404(report_id)
 
-    # Проверить, есть ли товар, связанный с этим отчётом
-    related_products = Product.query.filter_by(report_id=report_id).all()
-    if related_products:
+    if report.products:
         flash('Отчёт нельзя удалить, так как есть связанный с ним товар.', 'error')
         return redirect(url_for('reports_list'))
     db.session.delete(report)
@@ -381,9 +377,7 @@ def edit_sale(sale_id):
 def delete_sale(sale_id):
     sale = Sale.query.get_or_404(sale_id)
 
-    # Проверить, есть ли товары, связанные с этой продажей
-    related_products = Product.query.filter_by(sale_id=sale_id).all()
-    if related_products:
+    if sale.products:
         flash('Продажу нельзя удалить, так как есть связанный с ней товар.', 'error')
         return redirect(url_for('sales_list'))
     db.session.delete(sale)
@@ -448,8 +442,8 @@ def add_product():
 @app.route('/products/<product_id>')
 def product_detail(product_id):
     product = Product.query.get_or_404(product_id)
-    report = Report.query.get(product.report_id)
-    sale = Sale.query.get(product.sale_id)
+    report = product.report
+    sale = product.sale
 
     return render_template('products/product_detail.html', product=product, report=report, sale=sale)
 

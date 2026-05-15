@@ -16,8 +16,12 @@
     </div>
     <div class="form-group">
         <label for="report_type">Тип отчёта:</label>
-        <input type="text" id="report_type" name="report_type" class="form-control" required
-               value="{{ report.report_type if report else '' }}">
+        <select id="report_type" name="report_type" class="form-control" required>
+            {% set types = ['Ежедневный отчет', 'Еженедельный отчет', 'Ежемесячный отчет', 'Квартальный отчет', 'Годовой отчет'] %}
+            {% for t in types %}
+            <option value="{{ t }}" {% if report and report.report_type == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+        </select>
     </div>
     <div class="form-group">
         <label for="description">Описание:</label>

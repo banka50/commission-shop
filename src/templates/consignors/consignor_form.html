@@ -37,7 +37,7 @@
     <div class="form-group">
         <label for="INN">ИНН:</label>
         <input type="text" id="INN" name="INN" class="form-control" required
-               value="{{ consignor.INN if consignor else '' }}">
+               value="{{ consignor.inn if consignor else '' }}">
     </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if consignor else "Добавить" }}</button>
     <a href="{{ url_for('consignors_list') }}" class="btn btn-secondary">

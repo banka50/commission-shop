@@ -21,8 +21,11 @@
     </div>
     <div class="form-group">
         <label for="status">Статус:</label>
-        <input type="text" id="status" name="status" class="form-control" required
-               value="{{ sale.status if sale else '' }}">
+        <select id="status" name="status" class="form-control" required>
+            <option value="Оплачено" {% if sale and sale.status == 'Оплачено' %}selected{% endif %}>Оплачено</option>
+            <option value="Ожидает" {% if sale and sale.status == 'Ожидает' %}selected{% endif %}>Ожидает</option>
+            <option value="Возврат" {% if sale and sale.status == 'Возврат' %}selected{% endif %}>Возврат</option>
+        </select>
     </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if sale else "Добавить" }}</button>
     <a href="{{ url_for('sales_list') }}" class="btn btn-secondary">
