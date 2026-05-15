@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-from sqlalchemy.dialects.mysql import DECIMAL
 
 load_dotenv()
 
