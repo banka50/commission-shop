@@ -5,3 +5,4 @@ __pycache__/
 .venv/
 src/.env
 src/config.toml
+src/instance/
