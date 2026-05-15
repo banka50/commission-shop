@@ -26,20 +26,28 @@
     </div>
     <div class="form-group">
         <label for="price">Цена:</label>
-        <input type="text" id="price" name="price" class="form-control" required
+        <input type="number" step="0.01" min="0" id="price" name="price" class="form-control" required
                value="{{ product.price if product else '' }}">
     </div>
     <div class="form-group">
-        <label for="report_id">Отчёт:</label>
-        <select id="report_id" name="report_id" class="form-control" required>
-            <option value="">Выбрать отчёт</option>
-            {% for report in reports %}
-            <option value="{{ report.id }}"
-                    {% if product and product.report_id == report.id %}selected{% endif %}>
-                {{ report.number }}
-            </option>
-            {% endfor %}
-        </select>
+        <label>Акт приёма:</label>
+        {% if preset_consignor_report %}
+            <p class="form-control-plaintext">
+                <strong>{{ preset_consignor_report.number }}</strong>
+                — {{ preset_consignor_report.consignor.last_name }} {{ preset_consignor_report.consignor.first_name }}
+            </p>
+            <input type="hidden" name="consignor_report_id" value="{{ preset_consignor_report.id }}">
+        {% else %}
+            <select id="consignor_report_id" name="consignor_report_id" class="form-control" required>
+                <option value="">Выбрать акт приёма</option>
+                {% for cr in consignor_reports %}
+                <option value="{{ cr.id }}"
+                        {% if product and product.consignor_report_id == cr.id %}selected{% endif %}>
+                    {{ cr.number }} — {{ cr.consignor.last_name }} {{ cr.consignor.first_name }}
+                </option>
+                {% endfor %}
+            </select>
+        {% endif %}
     </div>
     <div class="form-group">
         <label for="sale_id">Продажа:</label>
@@ -54,8 +62,10 @@
         </select>
     </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if product else "Добавить" }}</button>
-    <a href="{{ url_for('products_list') }}" class="btn btn-secondary">
-        Отмена
-    </a>
+    {% if preset_consignor_report %}
+        <a href="{{ url_for('consignor_report_detail', consignor_report_id=preset_consignor_report.id) }}" class="btn btn-secondary">Отмена</a>
+    {% else %}
+        <a href="{{ url_for('products_list') }}" class="btn btn-secondary">Отмена</a>
+    {% endif %}
 </form>
 {% endblock %}

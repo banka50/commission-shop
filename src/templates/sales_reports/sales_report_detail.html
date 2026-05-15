@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Отчёт по продажам</h1>
+<p><strong>Номер:</strong> {{ sales_report.number }}</p>
+<p><strong>Дата:</strong> {{ sales_report.date }}</p>
+<p><strong>Тип:</strong> {{ sales_report.report_type }}</p>
+<p><strong>Описание:</strong> {{ sales_report.description }}</p>
+
+<a href="{{ url_for('sales_reports_list') }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Назад к отчётам
+</a>
+{% endblock %}

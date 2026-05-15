@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import Flask, render_template, redirect, url_for, request, flash
-from models import db, Consignor, Report, Sale, Product
+from models import db, Consignor, ConsignorReport, SalesReport, Sale, Product
 from config import Config
 
 from datetime import datetime
@@ -34,25 +34,45 @@ def insert_test_data():
          'phone_number': '79441234571', 'passport_data': '4514 567890', 'INN': '567890123456'},
     ]
 
+    consignor_reports = [
+        {'id': 1, 'number': 'ACT-001', 'date': '2023-09-15',
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 2},
+        {'id': 2, 'number': 'ACT-002', 'date': '2023-09-20',
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 3},
+        {'id': 3, 'number': 'ACT-003', 'date': '2023-10-01',
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 4},
+        {'id': 4, 'number': 'ACT-004', 'date': '2023-09-25',
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 5},
+        {'id': 5, 'number': 'ACT-005', 'date': '2023-10-05',
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 1},
+    ]
+
+    sales_reports = [
+        {'id': 1, 'number': 'REP-001', 'date': '2023-10-01',
+         'report_type': 'Ежедневный отчет', 'description': 'Отчет о продажах за 01.10.2023'},
+        {'id': 2, 'number': 'REP-002', 'date': '2023-10-07',
+         'report_type': 'Еженедельный отчет', 'description': 'Отчет о продажах за неделю 02–07.10.2023'},
+    ]
+
     products = [
         {'id': 1, 'product_name': 'Пальто зимнее', 'description': 'Женское, размер 48, цвет чёрный',
-         'delivery_date': '2023-09-15', 'expiry_date': '2024-03-15', 'price': 4500.00, 'report_id': 1,
-         'sale_id': None},
+         'delivery_date': '2023-09-15', 'expiry_date': '2024-03-15', 'price': 4500.00,
+         'consignor_report_id': 1, 'sale_id': None},
         {'id': 2, 'product_name': 'Ботинки кожаные', 'description': 'Мужские, размер 42, коричневые',
-         'delivery_date': '2023-09-20', 'expiry_date': '2024-02-20', 'price': 3200.00, 'report_id': 2,
-         'sale_id': 1},
+         'delivery_date': '2023-09-20', 'expiry_date': '2024-02-20', 'price': 3200.00,
+         'consignor_report_id': 2, 'sale_id': 1},
         {'id': 3, 'product_name': 'Сумка женская', 'description': 'Кожаная, среднего размера, бежевая',
-         'delivery_date': '2023-10-01', 'expiry_date': '2024-04-01', 'price': 2800.50, 'report_id': 3,
-         'sale_id': None},
+         'delivery_date': '2023-10-01', 'expiry_date': '2024-04-01', 'price': 2800.50,
+         'consignor_report_id': 3, 'sale_id': None},
         {'id': 4, 'product_name': 'Часы наручные', 'description': 'Механические, мужские, сталь',
-         'delivery_date': '2023-09-25', 'expiry_date': '2024-01-25', 'price': 12500.00, 'report_id': 4,
-         'sale_id': 3},
+         'delivery_date': '2023-09-25', 'expiry_date': '2024-01-25', 'price': 12500.00,
+         'consignor_report_id': 4, 'sale_id': 3},
         {'id': 5, 'product_name': 'Сервиз чайный', 'description': 'Фарфор, 12 персон, позолота',
-         'delivery_date': '2023-10-05', 'expiry_date': '2024-05-05','price': 8900.00, 'report_id': 5,
-         'sale_id': 4},
+         'delivery_date': '2023-10-05', 'expiry_date': '2024-05-05', 'price': 8900.00,
+         'consignor_report_id': 5, 'sale_id': 4},
         {'id': 6, 'product_name': 'Шарф пуховый', 'description': 'Оренбургский, белый, ажурный',
-         'delivery_date': '2023-10-10', 'expiry_date': '2024-01-10', 'price': 1500.00, 'report_id': 1,
-         'sale_id': 5},
+         'delivery_date': '2023-10-10', 'expiry_date': '2024-01-10', 'price': 1500.00,
+         'consignor_report_id': 1, 'sale_id': 5},
     ]
 
     sales = [
@@ -68,25 +88,11 @@ def insert_test_data():
          'commission': 54.08, 'status': 'Оплачено'},
     ]
 
-    reports = [
-        {'id': 1, 'number': 'REP-001', 'date': '2023-10-01', 'report_type': 'Ежедневный отчет',
-         'description': 'Отчет о продажах за день', 'consignor_id': 2},
-        {'id': 2, 'number': 'REP-002', 'date': '2023-10-02', 'report_type': 'Еженедельный отчет',
-         'description': 'Отчет о продажах за неделю', 'consignor_id': 3},
-        {'id': 3, 'number': 'REP-003', 'date': '2023-10-03', 'report_type': 'Ежемесячный отчет',
-         'description': 'Отчет о продажах за месяц', 'consignor_id': 4},
-        {'id': 4, 'number': 'REP-004', 'date': '2023-10-04', 'report_type': 'Квартальный отчет',
-         'description': 'Отчет о продажах за квартал', 'consignor_id': 5},
-        {'id': 5, 'number': 'REP-005', 'date': '2023-10-05', 'report_type': 'Годовой отчет',
-         'description': 'Отчет о продажах за год', 'consignor_id': 1},
-    ]
-
-    # Добавление комитентов
     for consignor_data in consignors:
         consignor = Consignor(
             first_name=consignor_data['first_name'],
             last_name=consignor_data['last_name'],
-            middle_name=consignor_data['middle_name'], # может быть None
+            middle_name=consignor_data['middle_name'],
             email=consignor_data['email'],
             phone_number=consignor_data['phone_number'],
             passport_data=consignor_data['passport_data'],
@@ -95,19 +101,26 @@ def insert_test_data():
         db.session.add(consignor)
     db.session.flush()
 
-    # Добавление отчетов
-    for report_data in reports:
-        report = Report(
-            number=report_data['number'],
-            date=datetime.strptime(report_data['date'], '%Y-%m-%d').date(),
-            report_type=report_data['report_type'],
-            description=report_data['description'],
-            consignor_id=report_data['consignor_id'],
+    for cr_data in consignor_reports:
+        cr = ConsignorReport(
+            number=cr_data['number'],
+            date=datetime.strptime(cr_data['date'], '%Y-%m-%d').date(),
+            description=cr_data['description'],
+            consignor_id=cr_data['consignor_id'],
         )
-        db.session.add(report)
+        db.session.add(cr)
     db.session.flush()
 
-    # Добавление продаж
+    for sr_data in sales_reports:
+        sr = SalesReport(
+            number=sr_data['number'],
+            date=datetime.strptime(sr_data['date'], '%Y-%m-%d').date(),
+            report_type=sr_data['report_type'],
+            description=sr_data['description'],
+        )
+        db.session.add(sr)
+    db.session.flush()
+
     for sale_data in sales:
         sale = Sale(
             sale_date=datetime.strptime(sale_data['sale_date'], '%Y-%m-%d').date(),
@@ -118,7 +131,6 @@ def insert_test_data():
         db.session.add(sale)
     db.session.flush()
 
-    # Добавление товаров
     for product_data in products:
         product = Product(
             product_name=product_data['product_name'],
@@ -126,12 +138,11 @@ def insert_test_data():
             delivery_date=datetime.strptime(product_data['delivery_date'], '%Y-%m-%d').date(),
             expiry_date=datetime.strptime(product_data['expiry_date'], '%Y-%m-%d').date(),
             price=product_data['price'],
-            report_id=product_data['report_id'],
+            consignor_report_id=product_data['consignor_report_id'],
             sale_id=product_data['sale_id'],
         )
         db.session.add(product)
 
-    # Сохранение изменений в базе данных
     db.session.commit()
 
 
@@ -219,8 +230,8 @@ def edit_consignor(consignor_id):
 def delete_consignor(consignor_id):
     consignor = Consignor.query.get_or_404(consignor_id)
 
-    if consignor.reports:
-        flash('Комитента нельзя удалить, так как есть связанный с ним отчёт.', 'error')
+    if consignor.consignor_reports:
+        flash('Комитента нельзя удалить, так как есть связанный с ним акт приёма.', 'error')
         return redirect(url_for('consignors_list'))
     db.session.delete(consignor)
     db.session.commit()
@@ -230,89 +241,158 @@ def delete_consignor(consignor_id):
 
 
 # ==============================
-#           REPORT
+#       АКТ ПРИЁМА (КОМИТЕНТ)
 # ==============================
 
 
-@app.route('/reports')
-def reports_list():
-    reports = Report.query.all()
+@app.route('/consignor_reports')
+def consignor_reports_list():
+    consignor_reports = ConsignorReport.query.all()
     consignors = Consignor.query.all()
-    # Создание словаря для быстрого доступа к именам комитентов по их идентификаторам
-    consignors_dict = {consignor.id: f"{consignor.first_name} {consignor.last_name} {consignor.middle_name or ''}".strip() for consignor in consignors}
+    consignors_dict = {
+        c.id: f"{c.last_name} {c.first_name} {c.middle_name or ''}".strip()
+        for c in consignors
+    }
 
-    return render_template('reports/reports_list.html', reports=reports, consignors=consignors_dict)
+    return render_template('consignor_reports/consignor_reports_list.html',
+                           consignor_reports=consignor_reports, consignors=consignors_dict)
 
 
-@app.route('/add_report', methods=['GET', 'POST'])
-def add_report():
+@app.route('/add_consignor_report', methods=['GET', 'POST'])
+def add_consignor_report():
     consignors = Consignor.query.all()
 
     if request.method == 'POST':
         number = request.form['number']
-        date = request.form['date']
-        report_type = request.form['report_type']
+        date = datetime.strptime(request.form['date'], '%Y-%m-%d')
         description = request.form['description']
         consignor_id = request.form['consignor_id']
 
-        date = datetime.strptime(date, '%Y-%m-%d')
-
-        new_report = Report(
+        new_report = ConsignorReport(
             number=number,
             date=date,
-            report_type=report_type,
             description=description,
             consignor_id=consignor_id
         )
         db.session.add(new_report)
         db.session.commit()
+        flash('Акт приёма успешно добавлен!', 'success')
 
-        flash('Отчёт успешно добавлен!', 'success')
+        return redirect(url_for('consignor_reports_list'))
 
-        return redirect(url_for('reports_list'))
-
-    return render_template('reports/report_form.html', consignors=consignors)
-
-
-@app.route('/report/<int:report_id>')
-def report_detail(report_id):
-    report = Report.query.get_or_404(report_id)
-    consignor = report.consignor
-
-    return render_template('reports/report_detail.html', report=report, consignor=consignor)
+    return render_template('consignor_reports/consignor_report_form.html',
+                           consignor_report=None, consignors=consignors)
 
 
-@app.route('/edit_report/<int:report_id>', methods=['GET', 'POST'])
-def edit_report(report_id):
-    report = Report.query.get_or_404(report_id)
+@app.route('/consignor_report/<int:consignor_report_id>')
+def consignor_report_detail(consignor_report_id):
+    consignor_report = ConsignorReport.query.get_or_404(consignor_report_id)
+
+    return render_template('consignor_reports/consignor_report_detail.html',
+                           consignor_report=consignor_report,
+                           consignor=consignor_report.consignor)
+
+
+@app.route('/edit_consignor_report/<int:consignor_report_id>', methods=['GET', 'POST'])
+def edit_consignor_report(consignor_report_id):
+    consignor_report = ConsignorReport.query.get_or_404(consignor_report_id)
     consignors = Consignor.query.all()
 
     if request.method == 'POST':
-        report.number = request.form['number']
-        report.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
-        report.report_type = request.form['report_type']
-        report.description = request.form['description']
-        report.consignor_id = request.form['consignor_id']
+        consignor_report.number = request.form['number']
+        consignor_report.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        consignor_report.description = request.form['description']
+        consignor_report.consignor_id = request.form['consignor_id']
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
-        return redirect(url_for('reports_list'))
+        return redirect(url_for('consignor_reports_list'))
 
-    return render_template('reports/report_form.html', report=report, consignors=consignors)
+    return render_template('consignor_reports/consignor_report_form.html',
+                           consignor_report=consignor_report, consignors=consignors)
 
 
-@app.route('/delete_report/<int:report_id>', methods=['POST'])
-def delete_report(report_id):
-    report = Report.query.get_or_404(report_id)
+@app.route('/delete_consignor_report/<int:consignor_report_id>', methods=['POST'])
+def delete_consignor_report(consignor_report_id):
+    consignor_report = ConsignorReport.query.get_or_404(consignor_report_id)
 
-    if report.products:
-        flash('Отчёт нельзя удалить, так как есть связанный с ним товар.', 'error')
-        return redirect(url_for('reports_list'))
-    db.session.delete(report)
+    if consignor_report.products:
+        flash('Акт приёма нельзя удалить, так как есть связанный с ним товар.', 'error')
+        return redirect(url_for('consignor_reports_list'))
+    db.session.delete(consignor_report)
     db.session.commit()
-    flash('Отчёт успешно удалён!', 'success')
+    flash('Акт приёма успешно удалён!', 'success')
 
-    return redirect(url_for('reports_list'))
+    return redirect(url_for('consignor_reports_list'))
+
+
+# ==============================
+#       ОТЧЁТ ПО ПРОДАЖАМ
+# ==============================
+
+
+@app.route('/sales_reports')
+def sales_reports_list():
+    sales_reports = SalesReport.query.all()
+
+    return render_template('sales_reports/sales_reports_list.html', sales_reports=sales_reports)
+
+
+@app.route('/add_sales_report', methods=['GET', 'POST'])
+def add_sales_report():
+    if request.method == 'POST':
+        number = request.form['number']
+        date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+        report_type = request.form['report_type']
+        description = request.form['description']
+
+        new_report = SalesReport(
+            number=number,
+            date=date,
+            report_type=report_type,
+            description=description
+        )
+        db.session.add(new_report)
+        db.session.commit()
+        flash('Отчёт по продажам успешно добавлен!', 'success')
+
+        return redirect(url_for('sales_reports_list'))
+
+    return render_template('sales_reports/sales_report_form.html', sales_report=None)
+
+
+@app.route('/sales_report/<int:sales_report_id>')
+def sales_report_detail(sales_report_id):
+    sales_report = SalesReport.query.get_or_404(sales_report_id)
+
+    return render_template('sales_reports/sales_report_detail.html', sales_report=sales_report)
+
+
+@app.route('/edit_sales_report/<int:sales_report_id>', methods=['GET', 'POST'])
+def edit_sales_report(sales_report_id):
+    sales_report = SalesReport.query.get_or_404(sales_report_id)
+
+    if request.method == 'POST':
+        sales_report.number = request.form['number']
+        sales_report.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        sales_report.report_type = request.form['report_type']
+        sales_report.description = request.form['description']
+        db.session.commit()
+        flash('Данные обновлены!', 'success')
+
+        return redirect(url_for('sales_reports_list'))
+
+    return render_template('sales_reports/sales_report_form.html', sales_report=sales_report)
+
+
+@app.route('/delete_sales_report/<int:sales_report_id>', methods=['POST'])
+def delete_sales_report(sales_report_id):
+    sales_report = SalesReport.query.get_or_404(sales_report_id)
+    db.session.delete(sales_report)
+    db.session.commit()
+    flash('Отчёт по продажам успешно удалён!', 'success')
+
+    return redirect(url_for('sales_reports_list'))
 
 
 # ==============================
@@ -388,38 +468,37 @@ def delete_sale(sale_id):
 
 
 # ==============================
-#           PRODUCT
+#           ТОВАР
 # ==============================
 
 
 @app.route('/products')
 def products_list():
     products = Product.query.all()
-    reports = Report.query.all()
+    consignor_reports = ConsignorReport.query.all()
     sales = Sale.query.all()
-    # Создание словаря для быстрого доступа к продажам и отчётам по их идентификаторам
-    reports_dict = { report.id: report.number for report in reports }
-    sales_dict = { sale.id: sale.status for sale in sales }
+    consignor_reports_dict = {cr.id: cr.number for cr in consignor_reports}
+    sales_dict = {sale.id: sale.status for sale in sales}
 
-    return render_template('products/products_list.html', products=products, reports=reports_dict, sales=sales_dict)
+    return render_template('products/products_list.html', products=products,
+                           consignor_reports=consignor_reports_dict, sales=sales_dict)
 
 
 @app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
-    reports = Report.query.all()
+    consignor_reports = ConsignorReport.query.all()
     sales = Sale.query.all()
+    preset_cr_id = request.args.get('consignor_report_id', type=int)
+    preset_cr = ConsignorReport.query.get(preset_cr_id) if preset_cr_id else None
+
     if request.method == 'POST':
         product_name = request.form['product_name']
         description = request.form['description']
-        delivery_date = request.form['delivery_date']
-        expiry_date = request.form['expiry_date']
+        delivery_date = datetime.strptime(request.form['delivery_date'], '%Y-%m-%d')
+        expiry_date = datetime.strptime(request.form['expiry_date'], '%Y-%m-%d')
         price = request.form['price']
-        report_id = request.form['report_id']
+        consignor_report_id = request.form['consignor_report_id']
         sale_id = request.form['sale_id'] or None
-
-        # Convert date to a Python date object
-        delivery_date = datetime.strptime(delivery_date, '%Y-%m-%d')
-        expiry_date = datetime.strptime(expiry_date, '%Y-%m-%d')
 
         new_product = Product(
             product_name=product_name,
@@ -427,31 +506,34 @@ def add_product():
             delivery_date=delivery_date,
             expiry_date=expiry_date,
             price=price,
-            report_id=report_id,
+            consignor_report_id=consignor_report_id,
             sale_id=sale_id
         )
         db.session.add(new_product)
         db.session.commit()
         flash('Товар успешно добавлен!', 'success')
 
+        if preset_cr_id:
+            return redirect(url_for('consignor_report_detail', consignor_report_id=consignor_report_id))
         return redirect(url_for('products_list'))
 
-    return render_template('products/product_form.html', reports=reports, sales=sales)
+    return render_template('products/product_form.html',
+                           consignor_reports=consignor_reports, sales=sales,
+                           preset_consignor_report=preset_cr)
 
 
 @app.route('/products/<product_id>')
 def product_detail(product_id):
     product = Product.query.get_or_404(product_id)
-    report = product.report
-    sale = product.sale
 
-    return render_template('products/product_detail.html', product=product, report=report, sale=sale)
+    return render_template('products/product_detail.html', product=product,
+                           consignor_report=product.consignor_report, sale=product.sale)
 
 
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
     product = Product.query.get_or_404(product_id)
-    reports = Report.query.all()
+    consignor_reports = ConsignorReport.query.all()
     sales = Sale.query.all()
 
     if request.method == 'POST':
@@ -460,14 +542,15 @@ def edit_product(product_id):
         product.delivery_date = datetime.strptime(request.form['delivery_date'], '%Y-%m-%d').date()
         product.expiry_date = datetime.strptime(request.form['expiry_date'], '%Y-%m-%d').date()
         product.price = request.form['price']
-        product.report_id = request.form['report_id']
+        product.consignor_report_id = request.form['consignor_report_id']
         product.sale_id = request.form['sale_id'] or None
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
         return redirect(url_for('products_list'))
 
-    return render_template('products/product_form.html', product=product, reports=reports, sales=sales)
+    return render_template('products/product_form.html', product=product,
+                           consignor_reports=consignor_reports, sales=sales)
 
 
 @app.route('/delete_product/<int:product_id>', methods=['POST'])
@@ -481,5 +564,5 @@ def delete_product(product_id):
 
 
 if __name__ == "__main__":
-    init_db() # создаст таблицы перед запуском сервера
-    app.run() #debug=True
+    init_db()
+    app.run()  # debug=True

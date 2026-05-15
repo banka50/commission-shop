@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ "Редактирование акта приёма" if consignor_report else "Добавление акта приёма" }}</h1>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="number">Номер акта:</label>
+        <input type="text" id="number" name="number" class="form-control" required
+               value="{{ consignor_report.number if consignor_report else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="date">Дата:</label>
+        <input type="date" id="date" name="date" class="form-control" required
+               value="{{ consignor_report.date if consignor_report else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="description">Описание:</label>
+        <textarea id="description" name="description" class="form-control" required>{{ consignor_report.description if consignor_report else '' }}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="consignor_id">Комитент:</label>
+        <select id="consignor_id" name="consignor_id" class="form-control" required>
+            <option value="">Выбрать комитента</option>
+            {% for consignor in consignors %}
+                <option value="{{ consignor.id }}"
+                        {% if consignor_report and consignor_report.consignor_id == consignor.id %}selected{% endif %}>
+                    {{ consignor.last_name }} {{ consignor.first_name }} {{ consignor.middle_name|default('') }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">{{ "Сохранить" if consignor_report else "Добавить" }}</button>
+    <a href="{{ url_for('consignor_reports_list') }}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

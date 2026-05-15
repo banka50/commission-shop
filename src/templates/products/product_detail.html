@@ -9,11 +9,11 @@
 <p><strong>Цена:</strong> {{ product.price }}</p>
 
 <div class="actions d-flex flex-column align-items-start mb-3">
-    {% if report %}
+    {% if consignor_report %}
         <div class="d-flex align-items-center mb-2">
-            <p class="mb-0 mr-3"><strong>Отчёт:</strong> {{ report.number }}</p>
-            <a href="{{ url_for('report_detail', report_id=product.report_id) }}" class="btn btn-primary">
-                <i class="fas fa-file-alt"></i> Перейти к отчёту
+            <p class="mb-0 mr-3"><strong>Акт приёма:</strong> {{ consignor_report.number }}</p>
+            <a href="{{ url_for('consignor_report_detail', consignor_report_id=product.consignor_report_id) }}" class="btn btn-primary">
+                <i class="fas fa-file-alt"></i> Перейти к акту приёма
             </a>
         </div>
     {% endif %}
@@ -25,7 +25,7 @@
             </a>
         </div>
     {% endif %}
-    <a href="{{ url_for('products_list') }}" class="btn btn-primary">
+    <a href="{{ url_for('products_list') }}" class="btn btn-primary mt-2">
         <i class="fas fa-arrow-left"></i> Назад к товарам
     </a>
 </div>

@@ -11,12 +11,12 @@
     </div>
     <div class="form-group">
         <label for="sale_price">Цена продажи:</label>
-        <input type="text" id="sale_price" name="sale_price" class="form-control" required
+        <input type="number" step="0.01" min="0" id="sale_price" name="sale_price" class="form-control" required
                value="{{ sale.sale_price if sale else '' }}">
     </div>
     <div class="form-group">
         <label for="commission">Комиссия:</label>
-        <input type="text" id="commission" name="commission" class="form-control" required
+        <input type="number" step="0.01" min="0" id="commission" name="commission" class="form-control" required
                value="{{ sale.commission if sale else '' }}">
     </div>
     <div class="form-group">

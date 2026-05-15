@@ -26,7 +26,7 @@
             <td>{{ product.delivery_date }}</td>
             <td>{{ product.expiry_date }}</td>
             <td>{{ product.price }}</td>
-            <td>{{ reports[product.report_id] }}</td>
+            <td>{{ consignor_reports[product.consignor_report_id] }}</td>
             <td>{{ sales[product.sale_id] if product.sale_id else '' }}</td>
             <td>
                 <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-primary btn-sm">

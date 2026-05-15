@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ "Редактирование отчёта по продажам" if sales_report else "Добавление отчёта по продажам" }}</h1>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="number">Номер отчёта:</label>
+        <input type="text" id="number" name="number" class="form-control" required
+               value="{{ sales_report.number if sales_report else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="date">Дата:</label>
+        <input type="date" id="date" name="date" class="form-control" required
+               value="{{ sales_report.date if sales_report else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="report_type">Тип отчёта:</label>
+        <select id="report_type" name="report_type" class="form-control" required>
+            {% set types = ['Ежедневный отчет', 'Еженедельный отчет', 'Ежемесячный отчет', 'Квартальный отчет', 'Годовой отчет'] %}
+            {% for t in types %}
+            <option value="{{ t }}" {% if sales_report and sales_report.report_type == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="description">Описание:</label>
+        <textarea id="description" name="description" class="form-control">{{ sales_report.description if sales_report else '' }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">{{ "Сохранить" if sales_report else "Добавить" }}</button>
+    <a href="{{ url_for('sales_reports_list') }}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

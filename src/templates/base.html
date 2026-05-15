@@ -31,8 +31,11 @@
                 <a href="{{ url_for('sales_list') }}" class="list-group-item list-group-item-action bg-light">
                     <i class="fas fa-shopping-bag"></i> Продажи
                 </a>
-                <a href="{{ url_for('reports_list') }}" class="list-group-item list-group-item-action bg-light">
-                    <i class="fas fa-file-alt fa-fw"></i> Отчёты
+                <a href="{{ url_for('consignor_reports_list') }}" class="list-group-item list-group-item-action bg-light">
+                    <i class="fas fa-file-import fa-fw"></i> Акты приёма
+                </a>
+                <a href="{{ url_for('sales_reports_list') }}" class="list-group-item list-group-item-action bg-light">
+                    <i class="fas fa-file-alt fa-fw"></i> Отчёты по продажам
                 </a>
             </div>
         </div>

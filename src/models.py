@@ -15,28 +15,39 @@ class Consignor(db.Model):
     passport_data = db.Column(db.String(50), nullable=False, unique=True)  # Паспортные данные комитента
     inn = db.Column(db.String(12), nullable=False, unique=True)  # ИНН комитента
 
-    reports = db.relationship('Report', back_populates='consignor', lazy=True)
+    consignor_reports = db.relationship('ConsignorReport', back_populates='consignor', lazy=True)
 
 
-class Report(db.Model):
-    __tablename__ = 'reports'
+class ConsignorReport(db.Model):
+    """Акт приёма товара от комитента."""
+    __tablename__ = 'consignor_reports'
 
-    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор отчета
-    number = db.Column(db.String(50), nullable=False, unique=True)  # Номер отчета
-    date = db.Column(db.Date, nullable=False)  # Дата отчета
+    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор акта приёма
+    number = db.Column(db.String(50), nullable=False, unique=True)  # Номер акта
+    date = db.Column(db.Date, nullable=False)  # Дата акта
+    description = db.Column(db.String(200), nullable=False)  # Описание
+    consignor_id = db.Column(db.Integer, db.ForeignKey('consignors.id'), nullable=False)  # Идентификатор комитента
+
+    consignor = db.relationship('Consignor', back_populates='consignor_reports')
+    products = db.relationship('Product', back_populates='consignor_report', lazy=True)
+
+
+class SalesReport(db.Model):
+    """Отчёт по продажам за период."""
+    __tablename__ = 'sales_reports'
+
+    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор отчёта
+    number = db.Column(db.String(50), nullable=False, unique=True)  # Номер отчёта
+    date = db.Column(db.Date, nullable=False)  # Дата отчёта
     report_type = db.Column(
         db.Enum(
             'Ежедневный отчет', 'Еженедельный отчет', 'Ежемесячный отчет',
             'Квартальный отчет', 'Годовой отчет',
             name='report_type_enum'
         ),
-        nullable=False  # Тип отчета
+        nullable=False  # Тип отчёта
     )
-    description = db.Column(db.String(200), nullable=False)  # Описание отчета
-    consignor_id = db.Column(db.Integer, db.ForeignKey('consignors.id'), nullable=False)  # Идентификатор комитента
-
-    consignor = db.relationship('Consignor', back_populates='reports')
-    products = db.relationship('Product', back_populates='report', lazy=True)
+    description = db.Column(db.String(200), nullable=True)  # Описание
 
 
 class Sale(db.Model):
@@ -63,8 +74,8 @@ class Product(db.Model):
     delivery_date = db.Column(db.Date, nullable=False)  # Дата доставки товара
     expiry_date = db.Column(db.Date, nullable=False)  # Срок реализации товара
     price = db.Column(db.Numeric(10, 2), nullable=False)  # Цена товара
-    report_id = db.Column(db.Integer, db.ForeignKey('reports.id'), nullable=False)  # Идентификатор отчёта
+    consignor_report_id = db.Column(db.Integer, db.ForeignKey('consignor_reports.id'), nullable=False)  # Идентификатор акта приёма
     sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=True)  # Идентификатор продажи
 
-    report = db.relationship('Report', back_populates='products')
+    consignor_report = db.relationship('ConsignorReport', back_populates='products')
     sale = db.relationship('Sale', back_populates='products')
