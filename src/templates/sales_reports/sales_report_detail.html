@@ -1,13 +1,134 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Отчёт по продажам</h1>
-<p><strong>Номер:</strong> {{ sales_report.number }}</p>
-<p><strong>Дата:</strong> {{ sales_report.date }}</p>
-<p><strong>Тип:</strong> {{ sales_report.report_type }}</p>
-<p><strong>Описание:</strong> {{ sales_report.description }}</p>
+<div class="d-flex justify-content-between align-items-start mb-3 no-print">
+    <h1>Отчёт № {{ report.number }}</h1>
+    <div>
+        <button onclick="window.print()" class="btn btn-outline-secondary">
+            <i class="fas fa-print"></i> Печать
+        </button>
+        <a href="{{ url_for('edit_sales_report', sales_report_id=report.id) }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Редактировать
+        </a>
+        <form action="{{ url_for('delete_sales_report', sales_report_id=report.id) }}" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-danger"
+                    onclick="return confirm('Удалить отчёт?');">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </form>
+    </div>
+</div>
 
-<a href="{{ url_for('sales_reports_list') }}" class="btn btn-secondary">
-    <i class="fas fa-arrow-left"></i> Назад к отчётам
-</a>
+<!-- Шапка для печати -->
+<div class="print-only">
+    <h2 class="text-center">Отчёт по продажам № {{ report.number }}</h2>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <p><strong>Дата формирования:</strong> {{ report.date }}</p>
+        <p><strong>Период:</strong> {{ report.date_from }} — {{ report.date_to }}</p>
+        {% if report.description %}
+        <p><strong>Примечание:</strong> {{ report.description }}</p>
+        {% endif %}
+    </div>
+    <div class="col-md-6">
+        <table class="table table-bordered no-datatable">
+            <tr>
+                <th>Выручка</th>
+                <td class="text-right font-weight-bold">{{ report.total_revenue }} ₽</td>
+            </tr>
+            <tr>
+                <th>Комиссия магазина</th>
+                <td class="text-right">{{ report.total_commission }} ₽</td>
+            </tr>
+            <tr class="table-success">
+                <th>К выплате комитентам</th>
+                <td class="text-right font-weight-bold">{{ report.total_payable }} ₽</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- График по категориям -->
+{% if category_totals %}
+<div class="no-print mb-4">
+    <h4>Выручка по категориям</h4>
+    <canvas id="categoryChart" height="100"></canvas>
+</div>
+{% endif %}
+
+<!-- Таблица строк -->
+<h4>Детализация</h4>
+<table class="table table-sm table-bordered table-striped no-datatable" id="reportTable">
+    <thead class="thead-light">
+        <tr>
+            <th>Дата</th>
+            <th>Товар</th>
+            <th>Категория</th>
+            <th>Комитент</th>
+            <th>Цена продажи</th>
+            <th>Комиссия</th>
+            <th>К выплате</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for line in report.lines %}
+        <tr>
+            <td>{{ line.sale_date }}</td>
+            <td>{{ line.product_name }}</td>
+            <td>{{ line.category_name or '—' }}</td>
+            <td>{{ line.consignor_name }}</td>
+            <td class="text-right">{{ line.sale_price }} ₽</td>
+            <td class="text-right">{{ line.commission }} ₽</td>
+            <td class="text-right">{{ line.payable }} ₽</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-muted text-center">Нет данных.</td></tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr class="font-weight-bold">
+            <td colspan="4" class="text-right">Итого:</td>
+            <td class="text-right">{{ report.total_revenue }} ₽</td>
+            <td class="text-right">{{ report.total_commission }} ₽</td>
+            <td class="text-right">{{ report.total_payable }} ₽</td>
+        </tr>
+    </tfoot>
+</table>
+
+<div class="no-print mt-3">
+    <a href="{{ url_for('sales_reports_list') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> К списку
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if category_totals %}
+<script>
+const ctx = document.getElementById('categoryChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ category_totals.keys() | list | tojson }},
+        datasets: [{
+            label: 'Выручка, ₽',
+            data: {{ category_totals.values() | map('float') | list | tojson }},
+            backgroundColor: [
+                '#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b',
+                '#858796','#5a5c69','#2e59d9','#17a673','#2c9faf'
+            ],
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { callback: v => v + ' ₽' } }
+        }
+    }
+});
+</script>
+{% endif %}
 {% endblock %}

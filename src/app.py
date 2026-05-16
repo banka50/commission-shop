@@ -5,7 +5,7 @@ load_dotenv()
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash
 from werkzeug.utils import secure_filename
-from models import db, Consignor, ConsignorReport, ConsignorReturn, SalesReport, Sale, Product, ProductImage
+from models import db, Consignor, ConsignorReport, ConsignorReturn, SalesReport, SalesReportLine, Sale, Product, ProductImage, Category
 from config import Config
 
 from datetime import datetime
@@ -76,10 +76,12 @@ def insert_test_data():
     ]
 
     sales_reports = [
-        {'id': 1, 'number': 'REP-001', 'date': '2023-10-01',
-         'report_type': 'Ежедневный отчет', 'description': 'Отчет о продажах за 01.10.2023'},
-        {'id': 2, 'number': 'REP-002', 'date': '2023-10-07',
-         'report_type': 'Еженедельный отчет', 'description': 'Отчет о продажах за неделю 02–07.10.2023'},
+        {'id': 1, 'number': 'REP-001', 'date': '2023-10-31',
+         'date_from': '2023-10-01', 'date_to': '2023-10-31',
+         'description': 'Отчёт о продажах за октябрь 2023'},
+        {'id': 2, 'number': 'REP-002', 'date': '2023-11-30',
+         'date_from': '2023-11-01', 'date_to': '2023-11-30',
+         'description': 'Отчёт о продажах за ноябрь 2023'},
     ]
 
     products = [
@@ -148,7 +150,8 @@ def insert_test_data():
         sr = SalesReport(
             number=sr_data['number'],
             date=datetime.strptime(sr_data['date'], '%Y-%m-%d').date(),
-            report_type=sr_data['report_type'],
+            date_from=datetime.strptime(sr_data['date_from'], '%Y-%m-%d').date(),
+            date_to=datetime.strptime(sr_data['date_to'], '%Y-%m-%d').date(),
             description=sr_data['description'],
         )
         db.session.add(sr)
@@ -373,8 +376,7 @@ def delete_consignor_report(consignor_report_id):
 
 @app.route('/sales_reports')
 def sales_reports_list():
-    sales_reports = SalesReport.query.all()
-
+    sales_reports = SalesReport.query.order_by(SalesReport.date.desc()).all()
     return render_template('sales_reports/sales_reports_list.html', sales_reports=sales_reports)
 
 
@@ -382,56 +384,89 @@ def sales_reports_list():
 def add_sales_report():
     if request.method == 'POST':
         number = request.form['number']
-        date = datetime.strptime(request.form['date'], '%Y-%m-%d')
-        report_type = request.form['report_type']
-        description = request.form['description']
+        date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        date_from = datetime.strptime(request.form['date_from'], '%Y-%m-%d').date()
+        date_to = datetime.strptime(request.form['date_to'], '%Y-%m-%d').date()
+        description = request.form.get('description', '').strip() or None
 
-        new_report = SalesReport(
+        # Собираем все оплаченные продажи за период
+        sales = Sale.query.join(Product).filter(
+            Sale.status == 'Оплачено',
+            Sale.sale_date >= date_from,
+            Sale.sale_date <= date_to,
+        ).all()
+
+        total_revenue = sum(s.sale_price for s in sales)
+        total_commission = sum(s.commission for s in sales)
+        total_payable = total_revenue - total_commission
+
+        report = SalesReport(
             number=number,
             date=date,
-            report_type=report_type,
-            description=description
+            date_from=date_from,
+            date_to=date_to,
+            description=description,
+            total_revenue=total_revenue,
+            total_commission=total_commission,
+            total_payable=total_payable,
         )
-        db.session.add(new_report)
-        db.session.commit()
-        flash('Отчёт по продажам успешно добавлен!', 'success')
+        db.session.add(report)
+        db.session.flush()
 
-        return redirect(url_for('sales_reports_list'))
+        for sale in sales:
+            product = sale.product
+            consignor = product.consignor_report.consignor
+            line = SalesReportLine(
+                report_id=report.id,
+                sale_id=sale.id,
+                sale_date=sale.sale_date,
+                product_name=product.product_name,
+                category_name=product.category.name if product.category else None,
+                consignor_name=f'{consignor.last_name} {consignor.first_name}',
+                sale_price=sale.sale_price,
+                commission=sale.commission,
+                payable=sale.sale_price - sale.commission,
+            )
+            db.session.add(line)
+
+        db.session.commit()
+        flash('Отчёт сформирован!', 'success')
+        return redirect(url_for('sales_report_detail', sales_report_id=report.id))
 
     return render_template('sales_reports/sales_report_form.html', sales_report=None)
 
 
 @app.route('/sales_report/<int:sales_report_id>')
 def sales_report_detail(sales_report_id):
-    sales_report = SalesReport.query.get_or_404(sales_report_id)
-
-    return render_template('sales_reports/sales_report_detail.html', sales_report=sales_report)
+    report = SalesReport.query.get_or_404(sales_report_id)
+    # Агрегация по категориям для графика
+    category_totals = {}
+    for line in report.lines:
+        cat = line.category_name or 'Без категории'
+        category_totals[cat] = category_totals.get(cat, Decimal('0')) + line.sale_price
+    return render_template('sales_reports/sales_report_detail.html',
+                           report=report, category_totals=category_totals)
 
 
 @app.route('/edit_sales_report/<int:sales_report_id>', methods=['GET', 'POST'])
 def edit_sales_report(sales_report_id):
-    sales_report = SalesReport.query.get_or_404(sales_report_id)
-
+    report = SalesReport.query.get_or_404(sales_report_id)
     if request.method == 'POST':
-        sales_report.number = request.form['number']
-        sales_report.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
-        sales_report.report_type = request.form['report_type']
-        sales_report.description = request.form['description']
+        report.number = request.form['number']
+        report.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        report.description = request.form.get('description', '').strip() or None
         db.session.commit()
-        flash('Данные обновлены!', 'success')
-
-        return redirect(url_for('sales_reports_list'))
-
-    return render_template('sales_reports/sales_report_form.html', sales_report=sales_report)
+        flash('Реквизиты отчёта обновлены!', 'success')
+        return redirect(url_for('sales_report_detail', sales_report_id=report.id))
+    return render_template('sales_reports/sales_report_form.html', sales_report=report)
 
 
 @app.route('/delete_sales_report/<int:sales_report_id>', methods=['POST'])
 def delete_sales_report(sales_report_id):
-    sales_report = SalesReport.query.get_or_404(sales_report_id)
-    db.session.delete(sales_report)
+    report = SalesReport.query.get_or_404(sales_report_id)
+    db.session.delete(report)
     db.session.commit()
-    flash('Отчёт по продажам успешно удалён!', 'success')
-
+    flash('Отчёт удалён.', 'success')
     return redirect(url_for('sales_reports_list'))
 
 
@@ -545,6 +580,53 @@ def delete_sale(sale_id):
 
 
 # ==============================
+#         КАТЕГОРИИ
+# ==============================
+
+
+@app.route('/categories')
+def categories_list():
+    categories = Category.query.order_by(Category.name).all()
+    return render_template('categories/categories_list.html', categories=categories)
+
+
+@app.route('/add_category', methods=['GET', 'POST'])
+def add_category():
+    if request.method == 'POST':
+        name = request.form['name'].strip()
+        description = request.form.get('description', '').strip() or None
+        db.session.add(Category(name=name, description=description))
+        db.session.commit()
+        flash('Категория добавлена!', 'success')
+        return redirect(url_for('categories_list'))
+    return render_template('categories/category_form.html', category=None)
+
+
+@app.route('/edit_category/<int:category_id>', methods=['GET', 'POST'])
+def edit_category(category_id):
+    category = Category.query.get_or_404(category_id)
+    if request.method == 'POST':
+        category.name = request.form['name'].strip()
+        category.description = request.form.get('description', '').strip() or None
+        db.session.commit()
+        flash('Категория обновлена!', 'success')
+        return redirect(url_for('categories_list'))
+    return render_template('categories/category_form.html', category=category)
+
+
+@app.route('/delete_category/<int:category_id>', methods=['POST'])
+def delete_category(category_id):
+    category = Category.query.get_or_404(category_id)
+    if category.products:
+        flash('Нельзя удалить категорию: есть товары в этой категории.', 'danger')
+        return redirect(url_for('categories_list'))
+    db.session.delete(category)
+    db.session.commit()
+    flash('Категория удалена.', 'success')
+    return redirect(url_for('categories_list'))
+
+
+# ==============================
 #           ТОВАР
 # ==============================
 
@@ -562,6 +644,7 @@ def products_list():
 @app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
     consignor_reports = ConsignorReport.query.all()
+    categories = Category.query.order_by(Category.name).all()
     preset_cr_id = request.args.get('consignor_report_id', type=int)
     preset_cr = ConsignorReport.query.get(preset_cr_id) if preset_cr_id else None
 
@@ -572,6 +655,7 @@ def add_product():
         expiry_date = datetime.strptime(request.form['expiry_date'], '%Y-%m-%d')
         price = request.form['price']
         consignor_report_id = request.form['consignor_report_id']
+        category_id = request.form.get('category_id') or None
         image_filenames = _save_images(request.files.getlist('images'))
 
         new_product = Product(
@@ -581,9 +665,10 @@ def add_product():
             expiry_date=expiry_date,
             price=price,
             consignor_report_id=consignor_report_id,
+            category_id=category_id,
         )
         db.session.add(new_product)
-        db.session.flush()  # получить new_product.id до commit
+        db.session.flush()
         for fn in image_filenames:
             db.session.add(ProductImage(filename=fn, product_id=new_product.id))
         db.session.commit()
@@ -595,6 +680,7 @@ def add_product():
 
     return render_template('products/product_form.html',
                            consignor_reports=consignor_reports,
+                           categories=categories,
                            preset_consignor_report=preset_cr)
 
 
@@ -610,6 +696,7 @@ def product_detail(product_id):
 def edit_product(product_id):
     product = Product.query.get_or_404(product_id)
     consignor_reports = ConsignorReport.query.all()
+    categories = Category.query.order_by(Category.name).all()
 
     if request.method == 'POST':
         product.product_name = request.form['product_name']
@@ -618,6 +705,7 @@ def edit_product(product_id):
         product.expiry_date = datetime.strptime(request.form['expiry_date'], '%Y-%m-%d').date()
         product.price = request.form['price']
         product.consignor_report_id = request.form['consignor_report_id']
+        product.category_id = request.form.get('category_id') or None
 
         # Удалить отмеченные фотографии
         ids_to_delete = request.form.getlist('delete_image_ids')
@@ -639,7 +727,8 @@ def edit_product(product_id):
         return redirect(url_for('products_list'))
 
     return render_template('products/product_form.html', product=product,
-                           consignor_reports=consignor_reports)
+                           consignor_reports=consignor_reports,
+                           categories=categories)
 
 
 @app.route('/delete_product/<int:product_id>', methods=['POST'])
@@ -789,6 +878,106 @@ def remove_product_from_return(return_id, product_id):
     db.session.commit()
     flash(f'Товар «{product.product_name}» убран из акта возврата.', 'success')
     return redirect(url_for('consignor_return_detail', return_id=return_id))
+
+
+# ==============================
+#          ДАШБОРД
+# ==============================
+
+
+@app.route('/dashboard')
+def dashboard():
+    from sqlalchemy import func
+    from datetime import date, timedelta
+
+    today = date.today()
+    month_start = today.replace(day=1)
+    # Предыдущий месяц
+    prev_month_end = month_start - timedelta(days=1)
+    prev_month_start = prev_month_end.replace(day=1)
+
+    def sales_stats(date_from, date_to):
+        rows = db.session.query(
+            func.count(Sale.id),
+            func.coalesce(func.sum(Sale.sale_price), 0),
+            func.coalesce(func.sum(Sale.commission), 0),
+        ).filter(
+            Sale.status == 'Оплачено',
+            Sale.sale_date >= date_from,
+            Sale.sale_date <= date_to,
+        ).one()
+        return {'count': rows[0], 'revenue': rows[1], 'commission': rows[2],
+                'payable': rows[1] - rows[2]}
+
+    curr = sales_stats(month_start, today)
+    prev = sales_stats(prev_month_start, prev_month_end)
+
+    # Кол-во товаров по статусам
+    product_counts = dict(
+        db.session.query(Product.status, func.count(Product.id))
+        .group_by(Product.status).all()
+    )
+
+    # Продажи по месяцам за последние 12 месяцев
+    dialect = db.engine.dialect.name
+    if dialect == 'sqlite':
+        month_expr = func.strftime('%Y-%m', Sale.sale_date).label('month')
+    else:
+        month_expr = func.date_trunc('month', Sale.sale_date).label('month')
+
+    monthly = db.session.query(
+        month_expr,
+        func.sum(Sale.sale_price).label('revenue'),
+        func.sum(Sale.commission).label('commission'),
+    ).filter(
+        Sale.status == 'Оплачено',
+        Sale.sale_date >= today - timedelta(days=365),
+    ).group_by('month').order_by('month').all()
+
+    # Продажи по категориям за текущий месяц
+    by_category = db.session.query(
+        func.coalesce(Category.name, 'Без категории').label('cat'),
+        func.sum(Sale.sale_price).label('revenue'),
+    ).join(Product, Sale.product_id == Product.id
+    ).outerjoin(Category, Product.category_id == Category.id
+    ).filter(
+        Sale.status == 'Оплачено',
+        Sale.sale_date >= month_start,
+        Sale.sale_date <= today,
+    ).group_by('cat').order_by(func.sum(Sale.sale_price).desc()).all()
+
+    # Товары с истекающим сроком (ближайшие 30 дней)
+    expiring = Product.query.filter(
+        Product.status == 'На витрине',
+        Product.expiry_date <= today + timedelta(days=30),
+        Product.expiry_date >= today,
+    ).order_by(Product.expiry_date).all()
+
+    # Просроченные товары
+    overdue = Product.query.filter(
+        Product.status == 'На витрине',
+        Product.expiry_date < today,
+    ).order_by(Product.expiry_date).all()
+
+    # Подготовка данных для графиков
+    monthly_labels = [str(row.month)[:7] for row in monthly]
+    monthly_revenue = [float(row.revenue) for row in monthly]
+    monthly_commission = [float(row.commission) for row in monthly]
+
+    cat_labels = [row.cat for row in by_category]
+    cat_revenue = [float(row.revenue) for row in by_category]
+
+    return render_template('dashboard.html',
+                           curr=curr, prev=prev,
+                           product_counts=product_counts,
+                           monthly_labels=monthly_labels,
+                           monthly_revenue=monthly_revenue,
+                           monthly_commission=monthly_commission,
+                           cat_labels=cat_labels,
+                           cat_revenue=cat_revenue,
+                           expiring=expiring,
+                           overdue=overdue,
+                           today=today)
 
 
 if __name__ == "__main__":

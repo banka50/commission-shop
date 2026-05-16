@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Дашборд</h1>
+
+<!-- KPI карточки -->
+<div class="row mb-4">
+    {% set kpis = [
+        ('Выручка (тек. мес.)', curr.revenue | string + ' ₽', 'primary', 'fa-ruble-sign'),
+        ('Комиссия (тек. мес.)', curr.commission | string + ' ₽', 'success', 'fa-percent'),
+        ('Продаж (тек. мес.)', curr.count, 'info', 'fa-shopping-cart'),
+        ('На витрине', product_counts.get('На витрине', 0), 'warning', 'fa-tag'),
+    ] %}
+    {% for label, value, color, icon in kpis %}
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-{{ color }} shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-{{ color }} text-uppercase mb-1">{{ label }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ value }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas {{ icon }} fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Статусы товаров -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header font-weight-bold">Товары по статусам</div>
+            <div class="card-body">
+                <canvas id="statusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- Выручка по категориям текущего месяца -->
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header font-weight-bold">Выручка по категориям (тек. мес.)</div>
+            <div class="card-body">
+                {% if cat_labels %}
+                <canvas id="catChart" height="120"></canvas>
+                {% else %}
+                <p class="text-muted">Нет продаж в текущем месяце.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Помесячная выручка -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header font-weight-bold">Выручка и комиссия по месяцам (12 мес.)</div>
+            <div class="card-body">
+                {% if monthly_labels %}
+                <canvas id="monthlyChart" height="80"></canvas>
+                {% else %}
+                <p class="text-muted">Нет данных за последние 12 месяцев.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Таблицы предупреждений -->
+<div class="row">
+    {% if expiring %}
+    <div class="col-md-6 mb-4">
+        <div class="card shadow border-left-warning">
+            <div class="card-header font-weight-bold text-warning">
+                <i class="fas fa-exclamation-triangle"></i> Истекает срок реализации (30 дней)
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Товар</th><th>Срок до</th></tr></thead>
+                    <tbody>
+                        {% for p in expiring %}
+                        <tr>
+                            <td><a href="{{ url_for('product_detail', product_id=p.id) }}">{{ p.product_name }}</a></td>
+                            <td>{{ p.expiry_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if overdue %}
+    <div class="col-md-6 mb-4">
+        <div class="card shadow border-left-danger">
+            <div class="card-header font-weight-bold text-danger">
+                <i class="fas fa-times-circle"></i> Просроченные товары
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Товар</th><th>Срок до</th></tr></thead>
+                    <tbody>
+                        {% for p in overdue %}
+                        <tr>
+                            <td><a href="{{ url_for('product_detail', product_id=p.id) }}">{{ p.product_name }}</a></td>
+                            <td class="text-danger">{{ p.expiry_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Статусы товаров
+new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['На витрине', 'Продан', 'Возвращён комитенту'],
+        datasets: [{
+            data: [
+                {{ product_counts.get('На витрине', 0) }},
+                {{ product_counts.get('Продан', 0) }},
+                {{ product_counts.get('Возвращён комитенту', 0) }}
+            ],
+            backgroundColor: ['#f6c23e', '#1cc88a', '#858796'],
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+
+{% if by_category %}
+// Категории
+new Chart(document.getElementById('catChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ cat_labels | tojson }},
+        datasets: [{
+            label: 'Выручка, ₽',
+            data: {{ cat_revenue | tojson }},
+            backgroundColor: '#4e73df',
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+{% endif %}
+
+{% if monthly_labels %}
+// По месяцам
+new Chart(document.getElementById('monthlyChart'), {
+    type: 'line',
+    data: {
+        labels: {{ monthly_labels | tojson }},
+        datasets: [
+            {
+                label: 'Выручка, ₽',
+                data: {{ monthly_revenue | tojson }},
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78,115,223,0.1)',
+                fill: true,
+                tension: 0.3,
+            },
+            {
+                label: 'Комиссия, ₽',
+                data: {{ monthly_commission | tojson }},
+                borderColor: '#1cc88a',
+                backgroundColor: 'rgba(28,200,138,0.1)',
+                fill: true,
+                tension: 0.3,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>{{ "Редактирование отчёта по продажам" if sales_report else "Добавление отчёта по продажам" }}</h1>
+<h1>{{ "Редактирование отчёта" if sales_report else "Новый отчёт по продажам" }}</h1>
 
 <form method="POST">
     <div class="form-group">
@@ -10,24 +10,36 @@
                value="{{ sales_report.number if sales_report else '' }}">
     </div>
     <div class="form-group">
-        <label for="date">Дата:</label>
+        <label for="date">Дата формирования:</label>
         <input type="date" id="date" name="date" class="form-control" required
                value="{{ sales_report.date if sales_report else '' }}">
     </div>
-    <div class="form-group">
-        <label for="report_type">Тип отчёта:</label>
-        <select id="report_type" name="report_type" class="form-control" required>
-            {% set types = ['Ежедневный отчет', 'Еженедельный отчет', 'Ежемесячный отчет', 'Квартальный отчет', 'Годовой отчет'] %}
-            {% for t in types %}
-            <option value="{{ t }}" {% if sales_report and sales_report.report_type == t %}selected{% endif %}>{{ t }}</option>
-            {% endfor %}
-        </select>
+    {% if not sales_report %}
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label for="date_from">Период с:</label>
+            <input type="date" id="date_from" name="date_from" class="form-control" required>
+        </div>
+        <div class="form-group col-md-6">
+            <label for="date_to">по:</label>
+            <input type="date" id="date_to" name="date_to" class="form-control" required>
+        </div>
     </div>
+    {% else %}
+    <p><strong>Период:</strong> {{ sales_report.date_from }} — {{ sales_report.date_to }}</p>
+    {% endif %}
     <div class="form-group">
-        <label for="description">Описание:</label>
-        <textarea id="description" name="description" class="form-control">{{ sales_report.description if sales_report else '' }}</textarea>
+        <label for="description">Примечание:</label>
+        <input type="text" id="description" name="description" class="form-control"
+               value="{{ sales_report.description if sales_report else '' }}">
     </div>
-    <button type="submit" class="btn btn-primary">{{ "Сохранить" if sales_report else "Добавить" }}</button>
+    {% if not sales_report %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        В отчёт войдут все продажи со статусом <strong>«Оплачено»</strong> за указанный период.
+    </div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary">{{ "Сохранить" if sales_report else "Сформировать отчёт" }}</button>
     <a href="{{ url_for('sales_reports_list') }}" class="btn btn-secondary">Отмена</a>
 </form>
 {% endblock %}

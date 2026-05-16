@@ -50,22 +50,15 @@ class ConsignorReturn(db.Model):
     products = db.relationship('Product', back_populates='consignor_return', lazy=True)
 
 
-class SalesReport(db.Model):
-    """Отчёт по продажам за период."""
-    __tablename__ = 'sales_reports'
+class Category(db.Model):
+    """Категория товара."""
+    __tablename__ = 'categories'
 
-    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор отчёта
-    number = db.Column(db.String(50), nullable=False, unique=True)  # Номер отчёта
-    date = db.Column(db.Date, nullable=False)  # Дата отчёта
-    report_type = db.Column(
-        db.Enum(
-            'Ежедневный отчет', 'Еженедельный отчет', 'Ежемесячный отчет',
-            'Квартальный отчет', 'Годовой отчет',
-            name='report_type_enum'
-        ),
-        nullable=False  # Тип отчёта
-    )
+    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор категории
+    name = db.Column(db.String(100), nullable=False, unique=True)  # Название категории
     description = db.Column(db.String(200), nullable=True)  # Описание
+
+    products = db.relationship('Product', back_populates='category', lazy=True)
 
 
 class Product(db.Model):
@@ -83,9 +76,11 @@ class Product(db.Model):
         nullable=False,
         default='На витрине'  # Текущий статус товара
     )
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)  # Категория
     consignor_report_id = db.Column(db.Integer, db.ForeignKey('consignor_reports.id'), nullable=False)  # Идентификатор акта приёма
     consignor_return_id = db.Column(db.Integer, db.ForeignKey('consignor_returns.id'), nullable=True)  # Идентификатор акта возврата
 
+    category = db.relationship('Category', back_populates='products')
     consignor_report = db.relationship('ConsignorReport', back_populates='products')
     consignor_return = db.relationship('ConsignorReturn', back_populates='products')
     sales = db.relationship('Sale', back_populates='product', lazy=True, order_by='Sale.sale_date')
@@ -119,3 +114,44 @@ class Sale(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)  # Идентификатор товара
 
     product = db.relationship('Product', back_populates='sales')
+    report_lines = db.relationship('SalesReportLine', back_populates='sale', lazy=True)
+
+
+class SalesReport(db.Model):
+    """Отчёт по продажам за период (snapshot)."""
+    __tablename__ = 'sales_reports'
+
+    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор отчёта
+    number = db.Column(db.String(50), nullable=False, unique=True)  # Номер отчёта
+    date = db.Column(db.Date, nullable=False)  # Дата формирования
+    date_from = db.Column(db.Date, nullable=False)  # Начало периода
+    date_to = db.Column(db.Date, nullable=False)  # Конец периода
+    description = db.Column(db.String(200), nullable=True)  # Примечание
+    total_revenue = db.Column(db.Numeric(10, 2), nullable=False, default=0)  # Итого выручка
+    total_commission = db.Column(db.Numeric(10, 2), nullable=False, default=0)  # Итого комиссия
+    total_payable = db.Column(db.Numeric(10, 2), nullable=False, default=0)  # Итого к выплате комитентам
+
+    lines = db.relationship('SalesReportLine', back_populates='report', lazy=True,
+                            cascade='all, delete-orphan',
+                            order_by='SalesReportLine.sale_date')
+
+
+class SalesReportLine(db.Model):
+    """Строка отчёта по продажам — snapshot данных на момент формирования."""
+    __tablename__ = 'sales_report_lines'
+
+    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор строки
+    report_id = db.Column(db.Integer, db.ForeignKey('sales_reports.id'), nullable=False)  # Идентификатор отчёта
+    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=True)  # Ссылка на продажу (может быть удалена)
+
+    # Snapshot полей на момент формирования отчёта
+    sale_date = db.Column(db.Date, nullable=False)  # Дата продажи
+    product_name = db.Column(db.String(100), nullable=False)  # Наименование товара
+    category_name = db.Column(db.String(100), nullable=True)  # Категория
+    consignor_name = db.Column(db.String(150), nullable=False)  # ФИО комитента
+    sale_price = db.Column(db.Numeric(10, 2), nullable=False)  # Цена продажи
+    commission = db.Column(db.Numeric(10, 2), nullable=False)  # Комиссия магазина
+    payable = db.Column(db.Numeric(10, 2), nullable=False)  # К выплате комитенту
+
+    report = db.relationship('SalesReport', back_populates='lines')
+    sale = db.relationship('Sale', back_populates='report_lines')
