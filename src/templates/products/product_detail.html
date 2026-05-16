@@ -27,6 +27,14 @@
             </a>
         </p>
         {% endif %}
+        {% if product.consignor_return %}
+        <p>
+            <strong>Акт возврата:</strong> {{ product.consignor_return.number }}
+            <a href="{{ url_for('edit_consignor_return', return_id=product.consignor_return_id, back='product', product_id=product.id) }}" class="btn btn-secondary btn-sm ml-2">
+                <i class="fas fa-undo"></i> Перейти к акту возврата
+            </a>
+        </p>
+        {% endif %}
     </div>
 </div>
 
