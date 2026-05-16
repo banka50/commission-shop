@@ -19,8 +19,8 @@
         {% for sale in sales %}
         <tr>
             <td>{{ sale.sale_date }}</td>
-            <td>{{ sale.sale_price }}</td>
-            <td>{{ sale.commission }}</td>
+            <td>{{ sale.sale_price }} ₽</td>
+            <td>{{ sale.commission }} ₽</td>
             <td>{{ sale.status }}</td>
             <td>
                 <a href="{{ url_for('sale_detail', sale_id=sale.id) }}" class="btn btn-primary btn-sm">

@@ -6,7 +6,7 @@
 <p><strong>Описание:</strong> {{ product.description }}</p>
 <p><strong>Дата доставки:</strong> {{ product.delivery_date }}</p>
 <p><strong>Срок реализации:</strong> {{ product.expiry_date }}</p>
-<p><strong>Цена:</strong> {{ product.price }}</p>
+<p><strong>Цена:</strong> {{ product.price }} ₽</p>
 
 {% if consignor_report %}
 <p>
@@ -33,8 +33,8 @@
         {% for sale in product.sales %}
         <tr>
             <td>{{ sale.sale_date }}</td>
-            <td>{{ sale.sale_price }}</td>
-            <td>{{ sale.commission }}</td>
+            <td>{{ sale.sale_price }} ₽</td>
+            <td>{{ sale.commission }} ₽</td>
             <td>{{ sale.status }}</td>
             <td>
                 <a href="{{ url_for('sale_detail', sale_id=sale.id) }}" class="btn btn-primary btn-sm">
