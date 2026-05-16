@@ -1,0 +1,15 @@
+{
+    "editor.renderWhitespace": "all",
+    "editor.autoIndent": "full",
+    // The number of spaces a tab is equal to. This setting is overridden
+    // based on the file contents when `editor.detectIndentation` is true.
+    "editor.tabSize": 4,
+    // Insert spaces when pressing Tab. This setting is overriden
+    // based on the file contents when `editor.detectIndentation` is true.
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": true,
+    "editor.rulers": [
+        {"column": 120, "color": "#ff0000"}
+    ],
+    "files.trimTrailingWhitespace": true
+}

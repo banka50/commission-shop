@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 .idea/
-.vscode/
 .venv/
 src/.env
 src/config.toml
