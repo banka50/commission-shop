@@ -38,6 +38,10 @@
                 <a href="{{ url_for('sales_reports_list') }}" class="list-group-item list-group-item-action bg-light">
                     <i class="fas fa-file-alt fa-fw"></i> Отчёты по продажам
                 </a>
+                <a class="nav-link {% if request.endpoint == 'consignor_returns_list' %}active{% endif %}"
+                   href="{{ url_for('consignor_returns_list') }}">
+                    <i class="fas fa-undo fa-fw"></i> Акты возврата
+                </a>
             </div>
         </div>
         <!-- /#sidebar-wrapper -->

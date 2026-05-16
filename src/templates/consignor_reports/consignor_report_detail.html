@@ -5,6 +5,7 @@
 <p><strong>Номер:</strong> {{ consignor_report.number }}</p>
 <p><strong>Дата:</strong> {{ consignor_report.date }}</p>
 <p><strong>Описание:</strong> {{ consignor_report.description }}</p>
+<p><strong>Комиссия:</strong> {{ consignor_report.commission_pct }} % (не менее {{ consignor_report.commission_min }} ₽)</p>
 {% if consignor %}
     <p><strong>Комитент:</strong> {{ consignor.last_name }} {{ consignor.first_name }} {{ consignor.middle_name or '' }}</p>
 {% endif %}
@@ -40,10 +41,12 @@
             <td>{{ product.delivery_date }}</td>
             <td>{{ product.expiry_date }}</td>
             <td>
-                {% if product.sales %}
-                    {{ product.sales[-1].status }}
+                {% if product.status == 'На витрине' %}
+                    <span class="badge badge-success">На витрине</span>
+                {% elif product.status == 'Продан' %}
+                    <span class="badge badge-primary">Продан</span>
                 {% else %}
-                    <span class="text-muted">Не продавался</span>
+                    <span class="badge badge-secondary">Возвращён комитенту</span>
                 {% endif %}
             </td>
         </tr>

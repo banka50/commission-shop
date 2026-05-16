@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ "Редактирование акта возврата" if ret else "Новый акт возврата" }}</h1>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="number">Номер акта:</label>
+        <input type="text" id="number" name="number" class="form-control" required
+               value="{{ ret.number if ret else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="date">Дата:</label>
+        <input type="date" id="date" name="date" class="form-control" required
+               value="{{ ret.date if ret else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="consignor_id">Комитент:</label>
+        <select id="consignor_id" name="consignor_id" class="form-control" required>
+            <option value="">Выбрать комитента</option>
+            {% for c in consignors %}
+            <option value="{{ c.id }}" {% if ret and ret.consignor_id == c.id %}selected{% endif %}>
+                {{ c.last_name }} {{ c.first_name }} {{ c.middle_name or '' }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="description">Примечание:</label>
+        <input type="text" id="description" name="description" class="form-control"
+               value="{{ ret.description if ret else '' }}">
+    </div>
+    <button type="submit" class="btn btn-primary">{{ "Сохранить" if ret else "Создать" }}</button>
+    <a href="{{ url_for('consignor_returns_list') }}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

@@ -35,10 +35,12 @@
             <td>{{ product.price }} ₽</td>
             <td>{{ consignor_reports[product.consignor_report_id] }}</td>
             <td>
-                {% if product.sales %}
-                    {{ product.sales[-1].status }} ({{ product.sales[-1].sale_date }})
+                {% if product.status == 'На витрине' %}
+                    <span class="badge badge-success">На витрине</span>
+                {% elif product.status == 'Продан' %}
+                    <span class="badge badge-primary">Продан</span>
                 {% else %}
-                    <span class="text-muted">Не продавался</span>
+                    <span class="badge badge-secondary">Возвращён комитенту</span>
                 {% endif %}
             </td>
             <td>

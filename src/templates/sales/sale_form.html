@@ -41,9 +41,13 @@
     <div class="form-group">
         <label for="status">Статус:</label>
         <select id="status" name="status" class="form-control" required>
-            <option value="Оплачено" {% if sale and sale.status == 'Оплачено' %}selected{% endif %}>Оплачено</option>
-            <option value="Ожидает" {% if sale and sale.status == 'Ожидает' %}selected{% endif %}>Ожидает</option>
-            <option value="Возврат" {% if sale and sale.status == 'Возврат' %}selected{% endif %}>Возврат</option>
+            {% if preset_product and preset_product.status == 'Продан' %}
+                <option value="Возврат от покупателя" selected>Возврат от покупателя</option>
+            {% else %}
+                <option value="Ожидает оплаты" {% if sale and sale.status == 'Ожидает оплаты' %}selected{% endif %}>Ожидает оплаты</option>
+                <option value="Оплачено" {% if sale and sale.status == 'Оплачено' %}selected{% endif %}>Оплачено</option>
+                <option value="Возврат от покупателя" {% if sale and sale.status == 'Возврат от покупателя' %}selected{% endif %}>Возврат от покупателя</option>
+            {% endif %}
         </select>
     </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if sale else "Добавить" }}</button>

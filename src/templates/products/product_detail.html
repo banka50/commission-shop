@@ -9,6 +9,15 @@
         <p><strong>Дата доставки:</strong> {{ product.delivery_date }}</p>
         <p><strong>Срок реализации:</strong> {{ product.expiry_date }}</p>
         <p><strong>Цена:</strong> {{ product.price }} ₽</p>
+<p><strong>Статус:</strong>
+    {% if product.status == 'На витрине' %}
+        <span class="badge badge-success">На витрине</span>
+    {% elif product.status == 'Продан' %}
+        <span class="badge badge-primary">Продан</span>
+    {% else %}
+        <span class="badge badge-secondary">Возвращён комитенту</span>
+    {% endif %}
+</p>
 
         {% if consignor_report %}
         <p>
@@ -96,9 +105,15 @@
 {% endif %}
 
 <div class="mt-3">
+    {% if product.status == 'На витрине' %}
     <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-success">
         <i class="fas fa-plus"></i> Оформить продажу
     </a>
+    {% elif product.status == 'Продан' %}
+    <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-outline-warning">
+        <i class="fas fa-undo"></i> Оформить возврат от покупателя
+    </a>
+    {% endif %}
     <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-warning">
         <i class="fas fa-edit"></i> Редактировать
     </a>

@@ -5,7 +5,7 @@ load_dotenv()
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash
 from werkzeug.utils import secure_filename
-from models import db, Consignor, ConsignorReport, SalesReport, Sale, Product, ProductImage
+from models import db, Consignor, ConsignorReport, ConsignorReturn, SalesReport, Sale, Product, ProductImage
 from config import Config
 
 from datetime import datetime
@@ -59,15 +59,20 @@ def insert_test_data():
 
     consignor_reports = [
         {'id': 1, 'number': 'ACT-001', 'date': '2023-09-15',
-         'description': 'Акт приёма товаров от комитента', 'consignor_id': 2},
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 2,
+         'commission_pct': 20, 'commission_min': 100},
         {'id': 2, 'number': 'ACT-002', 'date': '2023-09-20',
-         'description': 'Акт приёма товаров от комитента', 'consignor_id': 3},
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 3,
+         'commission_pct': 25, 'commission_min': 150},
         {'id': 3, 'number': 'ACT-003', 'date': '2023-10-01',
-         'description': 'Акт приёма товаров от комитента', 'consignor_id': 4},
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 4,
+         'commission_pct': 20, 'commission_min': 100},
         {'id': 4, 'number': 'ACT-004', 'date': '2023-09-25',
-         'description': 'Акт приёма товаров от комитента', 'consignor_id': 5},
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 5,
+         'commission_pct': 30, 'commission_min': 200},
         {'id': 5, 'number': 'ACT-005', 'date': '2023-10-05',
-         'description': 'Акт приёма товаров от комитента', 'consignor_id': 1},
+         'description': 'Акт приёма товаров от комитента', 'consignor_id': 1,
+         'commission_pct': 20, 'commission_min': 100},
     ]
 
     sales_reports = [
@@ -80,38 +85,38 @@ def insert_test_data():
     products = [
         {'id': 1, 'product_name': 'Пальто зимнее', 'description': 'Женское, размер 48, цвет чёрный',
          'delivery_date': '2023-09-15', 'expiry_date': '2024-03-15', 'price': 4500.00,
-         'consignor_report_id': 1},
+         'consignor_report_id': 1, 'status': 'На витрине'},
         {'id': 2, 'product_name': 'Ботинки кожаные', 'description': 'Мужские, размер 42, коричневые',
          'delivery_date': '2023-09-20', 'expiry_date': '2024-02-20', 'price': 3200.00,
-         'consignor_report_id': 2},
+         'consignor_report_id': 2, 'status': 'Продан'},
         {'id': 3, 'product_name': 'Сумка женская', 'description': 'Кожаная, среднего размера, бежевая',
          'delivery_date': '2023-10-01', 'expiry_date': '2024-04-01', 'price': 2800.50,
-         'consignor_report_id': 3},
+         'consignor_report_id': 3, 'status': 'На витрине'},
         {'id': 4, 'product_name': 'Часы наручные', 'description': 'Механические, мужские, сталь',
          'delivery_date': '2023-09-25', 'expiry_date': '2024-01-25', 'price': 12500.00,
-         'consignor_report_id': 4},
+         'consignor_report_id': 4, 'status': 'Продан'},
         {'id': 5, 'product_name': 'Сервиз чайный', 'description': 'Фарфор, 12 персон, позолота',
          'delivery_date': '2023-10-05', 'expiry_date': '2024-05-05', 'price': 8900.00,
-         'consignor_report_id': 5},
+         'consignor_report_id': 5, 'status': 'Продан'},
         {'id': 6, 'product_name': 'Шарф пуховый', 'description': 'Оренбургский, белый, ажурный',
          'delivery_date': '2023-10-10', 'expiry_date': '2024-01-10', 'price': 1500.00,
-         'consignor_report_id': 1},
+         'consignor_report_id': 1, 'status': 'Продан'},
     ]
 
     sales = [
         {'id': 1, 'sale_date': '2023-10-01', 'sale_price': 1500.00,
          'commission': 150.00, 'status': 'Оплачено', 'product_id': 2},
         {'id': 2, 'sale_date': '2023-10-02', 'sale_price': 3200.50,
-         'commission': 320.05, 'status': 'Ожидает', 'product_id': 3},
+         'commission': 320.05, 'status': 'Ожидает оплаты', 'product_id': 3},
         {'id': 3, 'sale_date': '2023-10-03', 'sale_price': 780.00,
-         'commission': 78.00, 'status': 'Оплачено', 'product_id': 4},
+         'commission': 200.00, 'status': 'Оплачено', 'product_id': 4},
         {'id': 4, 'sale_date': '2023-10-04', 'sale_price': 2100.00,
-         'commission': 210.00, 'status': 'Возврат', 'product_id': 5},
+         'commission': 420.00, 'status': 'Возврат от покупателя', 'product_id': 5},
         {'id': 5, 'sale_date': '2023-10-05', 'sale_price': 540.75,
-         'commission': 54.08, 'status': 'Оплачено', 'product_id': 6},
+         'commission': 108.15, 'status': 'Оплачено', 'product_id': 6},
         # Повторная продажа товара 5 после возврата
         {'id': 6, 'sale_date': '2023-10-10', 'sale_price': 2200.00,
-         'commission': 220.00, 'status': 'Оплачено', 'product_id': 5},
+         'commission': 440.00, 'status': 'Оплачено', 'product_id': 5},
     ]
 
     for consignor_data in consignors:
@@ -133,6 +138,8 @@ def insert_test_data():
             date=datetime.strptime(cr_data['date'], '%Y-%m-%d').date(),
             description=cr_data['description'],
             consignor_id=cr_data['consignor_id'],
+            commission_pct=cr_data['commission_pct'],
+            commission_min=cr_data['commission_min'],
         )
         db.session.add(cr)
     db.session.flush()
@@ -155,6 +162,7 @@ def insert_test_data():
             expiry_date=datetime.strptime(product_data['expiry_date'], '%Y-%m-%d').date(),
             price=product_data['price'],
             consignor_report_id=product_data['consignor_report_id'],
+            status=product_data['status'],
         )
         db.session.add(product)
     db.session.flush()
@@ -293,12 +301,16 @@ def add_consignor_report():
         date = datetime.strptime(request.form['date'], '%Y-%m-%d')
         description = request.form['description']
         consignor_id = request.form['consignor_id']
+        commission_pct = Decimal(request.form['commission_pct'])
+        commission_min = Decimal(request.form['commission_min'])
 
         new_report = ConsignorReport(
             number=number,
             date=date,
             description=description,
-            consignor_id=consignor_id
+            consignor_id=consignor_id,
+            commission_pct=commission_pct,
+            commission_min=commission_min,
         )
         db.session.add(new_report)
         db.session.commit()
@@ -329,6 +341,8 @@ def edit_consignor_report(consignor_report_id):
         consignor_report.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
         consignor_report.description = request.form['description']
         consignor_report.consignor_id = request.form['consignor_id']
+        consignor_report.commission_pct = Decimal(request.form['commission_pct'])
+        consignor_report.commission_min = Decimal(request.form['commission_min'])
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
@@ -433,6 +447,18 @@ def sales_list():
     return render_template('sales/sales_list.html', sales=sales)
 
 
+def _update_product_status(product: Product) -> None:
+    """Обновляет статус товара на основе последней продажи."""
+    if not product.sales:
+        product.status = 'На витрине'
+        return
+    last_sale = sorted(product.sales, key=lambda s: s.sale_date)[-1]
+    if last_sale.status in ('Ожидает оплаты', 'Оплачено'):
+        product.status = 'Продан'
+    else:
+        product.status = 'На витрине'
+
+
 @app.route('/add_sale', methods=['GET', 'POST'])
 def add_sale():
     products = Product.query.all()
@@ -444,7 +470,16 @@ def add_sale():
         sale_price = Decimal(request.form['sale_price'])
         commission = Decimal(request.form['commission'])
         status = request.form['status']
-        product_id = request.form['product_id']
+        product_id = int(request.form['product_id'])
+        product = Product.query.get_or_404(product_id)
+
+        if product.status == 'Возвращён комитенту':
+            flash('Нельзя оформить продажу: товар возвращён комитенту.', 'danger')
+            return redirect(url_for('product_detail', product_id=product_id))
+
+        if product.status == 'Продан' and status in ('Ожидает оплаты', 'Оплачено'):
+            flash('Нельзя оформить продажу: товар уже продан. Сначала оформите возврат от покупателя.', 'danger')
+            return redirect(url_for('product_detail', product_id=product_id))
 
         new_sale = Sale(
             sale_date=sale_date,
@@ -454,6 +489,8 @@ def add_sale():
             product_id=product_id
         )
         db.session.add(new_sale)
+        db.session.flush()
+        _update_product_status(new_sale.product)
         db.session.commit()
         flash('Продажа успешно добавлена!', 'success')
 
@@ -482,7 +519,9 @@ def edit_sale(sale_id):
         sale.sale_price = Decimal(request.form['sale_price'])
         sale.commission = Decimal(request.form['commission'])
         sale.status = request.form['status']
-        sale.product_id = request.form['product_id']
+        sale.product_id = int(request.form['product_id'])
+        db.session.flush()
+        _update_product_status(sale.product)
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
@@ -495,7 +534,10 @@ def edit_sale(sale_id):
 @app.route('/delete_sale/<int:sale_id>', methods=['POST'])
 def delete_sale(sale_id):
     sale = Sale.query.get_or_404(sale_id)
+    product = sale.product
     db.session.delete(sale)
+    db.session.flush()
+    _update_product_status(product)
     db.session.commit()
     flash('Продажа успешно удалена!', 'success')
 
@@ -646,6 +688,107 @@ def upload_product_images(product_id):
     if saved:
         flash(f'Загружено фотографий: {len(saved)}.', 'success')
     return redirect(url_for('product_detail', product_id=product_id))
+
+
+# ==============================
+#       АКТЫ ВОЗВРАТА
+# ==============================
+
+
+@app.route('/consignor_returns')
+def consignor_returns_list():
+    returns = ConsignorReturn.query.order_by(ConsignorReturn.date.desc()).all()
+    return render_template('consignor_returns/consignor_returns_list.html', returns=returns)
+
+
+@app.route('/add_consignor_return', methods=['GET', 'POST'])
+def add_consignor_return():
+    consignors = Consignor.query.order_by(Consignor.last_name).all()
+
+    if request.method == 'POST':
+        number = request.form['number']
+        date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        description = request.form.get('description', '').strip() or None
+        consignor_id = int(request.form['consignor_id'])
+
+        new_return = ConsignorReturn(
+            number=number,
+            date=date,
+            description=description,
+            consignor_id=consignor_id,
+        )
+        db.session.add(new_return)
+        db.session.commit()
+        flash('Акт возврата создан!', 'success')
+        return redirect(url_for('consignor_return_detail', return_id=new_return.id))
+
+    return render_template('consignor_returns/consignor_return_form.html',
+                           ret=None, consignors=consignors)
+
+
+@app.route('/consignor_returns/<int:return_id>')
+def consignor_return_detail(return_id):
+    ret = ConsignorReturn.query.get_or_404(return_id)
+    # Товары комитента, которые на витрине или уже возвращены этим актом
+    available_products = Product.query.filter(
+        Product.consignor_report.has(consignor_id=ret.consignor_id),
+        Product.status.in_(['На витрине', 'Возвращён комитенту']),
+    ).all()
+    return render_template('consignor_returns/consignor_return_detail.html',
+                           ret=ret, available_products=available_products)
+
+
+@app.route('/edit_consignor_return/<int:return_id>', methods=['GET', 'POST'])
+def edit_consignor_return(return_id):
+    ret = ConsignorReturn.query.get_or_404(return_id)
+    consignors = Consignor.query.order_by(Consignor.last_name).all()
+
+    if request.method == 'POST':
+        ret.number = request.form['number']
+        ret.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        ret.description = request.form.get('description', '').strip() or None
+        ret.consignor_id = int(request.form['consignor_id'])
+        db.session.commit()
+        flash('Акт возврата обновлён!', 'success')
+        return redirect(url_for('consignor_return_detail', return_id=ret.id))
+
+    return render_template('consignor_returns/consignor_return_form.html',
+                           ret=ret, consignors=consignors)
+
+
+@app.route('/delete_consignor_return/<int:return_id>', methods=['POST'])
+def delete_consignor_return(return_id):
+    ret = ConsignorReturn.query.get_or_404(return_id)
+    # Освобождаем товары — они снова «на витрине»
+    for product in ret.products:
+        product.consignor_return_id = None
+        product.status = 'На витрине'
+    db.session.delete(ret)
+    db.session.commit()
+    flash('Акт возврата удалён.', 'success')
+    return redirect(url_for('consignor_returns_list'))
+
+
+@app.route('/add_product_to_return/<int:return_id>', methods=['POST'])
+def add_product_to_return(return_id):
+    ret = ConsignorReturn.query.get_or_404(return_id)
+    product_id = int(request.form['product_id'])
+    product = Product.query.get_or_404(product_id)
+    product.consignor_return_id = ret.id
+    product.status = 'Возвращён комитенту'
+    db.session.commit()
+    flash(f'Товар «{product.product_name}» добавлен в акт возврата.', 'success')
+    return redirect(url_for('consignor_return_detail', return_id=return_id))
+
+
+@app.route('/remove_product_from_return/<int:return_id>/<int:product_id>', methods=['POST'])
+def remove_product_from_return(return_id, product_id):
+    product = Product.query.get_or_404(product_id)
+    product.consignor_return_id = None
+    product.status = 'На витрине'
+    db.session.commit()
+    flash(f'Товар «{product.product_name}» убран из акта возврата.', 'success')
+    return redirect(url_for('consignor_return_detail', return_id=return_id))
 
 
 if __name__ == "__main__":

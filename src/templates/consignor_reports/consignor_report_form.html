@@ -30,6 +30,20 @@
             {% endfor %}
         </select>
     </div>
+    <div class="form-row">
+        <div class="form-group col-md-4">
+            <label for="commission_pct">Комиссия, %:</label>
+            <input type="number" step="0.01" min="0" max="100" id="commission_pct" name="commission_pct"
+                   class="form-control" required
+                   value="{{ consignor_report.commission_pct if consignor_report else '20' }}">
+        </div>
+        <div class="form-group col-md-4">
+            <label for="commission_min">Минимальная сумма, ₽:</label>
+            <input type="number" step="0.01" min="0" id="commission_min" name="commission_min"
+                   class="form-control" required
+                   value="{{ consignor_report.commission_min if consignor_report else '0' }}">
+        </div>
+    </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if consignor_report else "Добавить" }}</button>
     <a href="{{ url_for('consignor_reports_list') }}" class="btn btn-secondary">Отмена</a>
 </form>

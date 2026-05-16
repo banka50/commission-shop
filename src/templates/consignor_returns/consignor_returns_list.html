@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Акты возврата комитентам</h1>
+<a href="{{ url_for('add_consignor_return') }}" class="btn btn-primary mb-3">
+    <i class="fas fa-plus"></i> Создать акт возврата
+</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Номер</th>
+            <th>Дата</th>
+            <th>Комитент</th>
+            <th>Товаров</th>
+            <th>Описание</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ret in returns %}
+        <tr>
+            <td>{{ ret.number }}</td>
+            <td>{{ ret.date }}</td>
+            <td>{{ ret.consignor.last_name }} {{ ret.consignor.first_name }}</td>
+            <td>{{ ret.products | length }}</td>
+            <td>{{ ret.description or '' }}</td>
+            <td>
+                <a href="{{ url_for('consignor_return_detail', return_id=ret.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i> Показать
+                </a>
+                <a href="{{ url_for('edit_consignor_return', return_id=ret.id) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+                <form action="{{ url_for('delete_consignor_return', return_id=ret.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm"
+                            onclick="return confirm('Удалить акт возврата? Товары будут возвращены на витрину.');">
+                        <i class="fas fa-trash-alt"></i> Удалить
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

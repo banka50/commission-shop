@@ -17,6 +17,7 @@ class Consignor(db.Model):
     inn = db.Column(db.String(12), nullable=False, unique=True)  # ИНН комитента
 
     consignor_reports = db.relationship('ConsignorReport', back_populates='consignor', lazy=True)
+    consignor_returns = db.relationship('ConsignorReturn', back_populates='consignor', lazy=True)
 
 
 class ConsignorReport(db.Model):
@@ -28,9 +29,25 @@ class ConsignorReport(db.Model):
     date = db.Column(db.Date, nullable=False)  # Дата акта
     description = db.Column(db.String(200), nullable=False)  # Описание
     consignor_id = db.Column(db.Integer, db.ForeignKey('consignors.id'), nullable=False)  # Идентификатор комитента
+    commission_pct = db.Column(db.Numeric(5, 2), nullable=False, default=20)  # Процент комиссии
+    commission_min = db.Column(db.Numeric(10, 2), nullable=False, default=0)  # Минимальная сумма комиссии
 
     consignor = db.relationship('Consignor', back_populates='consignor_reports')
     products = db.relationship('Product', back_populates='consignor_report', lazy=True)
+
+
+class ConsignorReturn(db.Model):
+    """Акт возврата товара комитенту."""
+    __tablename__ = 'consignor_returns'
+
+    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор акта возврата
+    number = db.Column(db.String(50), nullable=False, unique=True)  # Номер акта
+    date = db.Column(db.Date, nullable=False)  # Дата акта
+    description = db.Column(db.String(200), nullable=True)  # Описание
+    consignor_id = db.Column(db.Integer, db.ForeignKey('consignors.id'), nullable=False)  # Идентификатор комитента
+
+    consignor = db.relationship('Consignor', back_populates='consignor_returns')
+    products = db.relationship('Product', back_populates='consignor_return', lazy=True)
 
 
 class SalesReport(db.Model):
@@ -61,9 +78,16 @@ class Product(db.Model):
     delivery_date = db.Column(db.Date, nullable=False)  # Дата доставки товара
     expiry_date = db.Column(db.Date, nullable=False)  # Срок реализации товара
     price = db.Column(db.Numeric(10, 2), nullable=False)  # Цена товара
+    status = db.Column(
+        db.Enum('На витрине', 'Продан', 'Возвращён комитенту', name='product_status'),
+        nullable=False,
+        default='На витрине'  # Текущий статус товара
+    )
     consignor_report_id = db.Column(db.Integer, db.ForeignKey('consignor_reports.id'), nullable=False)  # Идентификатор акта приёма
+    consignor_return_id = db.Column(db.Integer, db.ForeignKey('consignor_returns.id'), nullable=True)  # Идентификатор акта возврата
 
     consignor_report = db.relationship('ConsignorReport', back_populates='products')
+    consignor_return = db.relationship('ConsignorReturn', back_populates='products')
     sales = db.relationship('Sale', back_populates='product', lazy=True, order_by='Sale.sale_date')
     images = db.relationship('ProductImage', back_populates='product', lazy=True,
                              cascade='all, delete-orphan')
@@ -87,9 +111,9 @@ class Sale(db.Model):
     id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор продажи
     sale_date = db.Column(db.Date, nullable=False)  # Дата продажи
     sale_price = db.Column(db.Numeric(10, 2), nullable=False)  # Цена продажи
-    commission = db.Column(db.Numeric(10, 2), nullable=False)  # Комиссия
+    commission = db.Column(db.Numeric(10, 2), nullable=False)  # Сумма комиссии
     status = db.Column(
-        db.Enum('Оплачено', 'Ожидает', 'Возврат', name='sale_status'),
+        db.Enum('Ожидает оплаты', 'Оплачено', 'Возврат от покупателя', name='sale_status'),
         nullable=False  # Статус
     )
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)  # Идентификатор товара
