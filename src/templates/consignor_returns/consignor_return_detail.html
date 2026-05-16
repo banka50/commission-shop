@@ -5,7 +5,7 @@
 
 <p><strong>Дата:</strong> {{ ret.date }}</p>
 <p><strong>Комитент:</strong>
-    <a href="{{ url_for('consignor_detail', consignor_id=ret.consignor_id) }}">
+    <a href="{{ url_for('consignor_detail', consignor_id=ret.consignor_id, back='return', return_id=ret.id) }}">
         {{ ret.consignor.last_name }} {{ ret.consignor.first_name }} {{ ret.consignor.middle_name or '' }}
     </a>
 </p>

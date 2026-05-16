@@ -9,13 +9,15 @@
 <p><strong>Номер телефона:</strong> {{ consignor.phone_number }}</p>
 <p><strong>Паспортные данные:</strong> {{ consignor.passport_data }}</p>
 <p><strong>ИНН:</strong> {{ consignor.inn }}</p>
-<button type="button" class="btn btn-secondary" onclick="goBack()">
-    <i class="fas fa-arrow-left"></i> Назад к комитентам
-</button>
-
-<script>
-    function goBack() {
-        window.history.back();
-    }
-</script>
+<div class="mt-3">
+    {% if request.args.get('back') == 'return' and request.args.get('return_id') %}
+    <a href="{{ url_for('consignor_return_detail', return_id=request.args.get('return_id')) }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к акту возврата
+    </a>
+    {% else %}
+    <a href="{{ url_for('consignors_list') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к комитентам
+    </a>
+    {% endif %}
+</div>
 {% endblock %}
