@@ -690,7 +690,7 @@ def add_consignor_return():
         db.session.add(new_return)
         db.session.commit()
         flash('Акт возврата создан!', 'success')
-        return redirect(url_for('consignor_return_detail', return_id=new_return.id))
+        return redirect(url_for('edit_consignor_return', return_id=new_return.id))
 
     return render_template('consignor_returns/consignor_return_form.html',
                            ret=None, consignors=consignors)
@@ -720,10 +720,15 @@ def edit_consignor_return(return_id):
         ret.consignor_id = int(request.form['consignor_id'])
         db.session.commit()
         flash('Акт возврата обновлён!', 'success')
-        return redirect(url_for('consignor_return_detail', return_id=ret.id))
+        return redirect(url_for('edit_consignor_return', return_id=ret.id))
 
+    available_products = Product.query.filter(
+        Product.consignor_report.has(consignor_id=ret.consignor_id),
+        Product.status.in_(['На витрине', 'Возвращён комитенту']),
+    ).all()
     return render_template('consignor_returns/consignor_return_form.html',
-                           ret=ret, consignors=consignors)
+                           ret=ret, consignors=consignors,
+                           available_products=available_products)
 
 
 @app.route('/delete_consignor_return/<int:return_id>', methods=['POST'])
@@ -748,7 +753,7 @@ def add_product_to_return(return_id):
     product.status = 'Возвращён комитенту'
     db.session.commit()
     flash(f'Товар «{product.product_name}» добавлен в акт возврата.', 'success')
-    return redirect(url_for('consignor_return_detail', return_id=return_id))
+    return redirect(url_for('edit_consignor_return', return_id=return_id))
 
 
 @app.route('/remove_product_from_return/<int:return_id>/<int:product_id>', methods=['POST'])
@@ -758,7 +763,7 @@ def remove_product_from_return(return_id, product_id):
     product.status = 'На витрине'
     db.session.commit()
     flash(f'Товар «{product.product_name}» убран из акта возврата.', 'success')
-    return redirect(url_for('consignor_return_detail', return_id=return_id))
+    return redirect(url_for('edit_consignor_return', return_id=return_id))
 
 
 # ==============================
