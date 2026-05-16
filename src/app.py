@@ -252,9 +252,9 @@ def add_sales_report():
         date_to = datetime.strptime(request.form['date_to'], '%Y-%m-%d').date()
         description = request.form.get('description', '').strip() or None
 
-        # Собираем все оплаченные продажи за период
+        # Продажи и возвраты за период (возвраты хранятся с отрицательными суммами)
         sales = Sale.query.join(Product).filter(
-            Sale.status == 'Оплачено',
+            Sale.status.in_(['Оплачено', 'Возврат от покупателя']),
             Sale.sale_date >= date_from,
             Sale.sale_date <= date_to,
         ).all()
@@ -363,6 +363,16 @@ def add_sale():
     preset_product_id = request.args.get('product_id', type=int)
     preset_product = Product.query.get(preset_product_id) if preset_product_id else None
 
+    # Последняя оплаченная продажа товара — для автоподстановки сторно
+    last_paid_sale = None
+    if preset_product and preset_product.status == 'Продан':
+        last_paid_sale = (
+            Sale.query
+            .filter_by(product_id=preset_product.id, status='Оплачено')
+            .order_by(Sale.sale_date.desc())
+            .first()
+        )
+
     if request.method == 'POST':
         sale_date = datetime.strptime(request.form['sale_date'], '%Y-%m-%d').date()
         sale_price = Decimal(request.form['sale_price'])
@@ -378,6 +388,13 @@ def add_sale():
         if product.status == 'Продан' and status in ('Ожидает оплаты', 'Оплачено'):
             flash('Нельзя оформить продажу: товар уже продан. Сначала оформите возврат от покупателя.', 'danger')
             return redirect(url_for('product_detail', product_id=product_id))
+
+        # Для возврата суммы должны быть отрицательными
+        if status == 'Возврат от покупателя':
+            if sale_price > 0:
+                sale_price = -sale_price
+            if commission > 0:
+                commission = -commission
 
         new_sale = Sale(
             sale_date=sale_date,
@@ -397,7 +414,8 @@ def add_sale():
         return redirect(url_for('sales_list'))
 
     return render_template('sales/sale_form.html', sale=None,
-                           products=products, preset_product=preset_product)
+                           products=products, preset_product=preset_product,
+                           last_paid_sale=last_paid_sale)
 
 
 @app.route('/sale/<int:sale_id>')
@@ -765,7 +783,7 @@ def dashboard():
             func.coalesce(func.sum(Sale.sale_price), 0),
             func.coalesce(func.sum(Sale.commission), 0),
         ).filter(
-            Sale.status == 'Оплачено',
+            Sale.status.in_(['Оплачено', 'Возврат от покупателя']),
             Sale.sale_date >= date_from,
             Sale.sale_date <= date_to,
         ).one()
@@ -793,7 +811,7 @@ def dashboard():
         func.sum(Sale.sale_price).label('revenue'),
         func.sum(Sale.commission).label('commission'),
     ).filter(
-        Sale.status == 'Оплачено',
+        Sale.status.in_(['Оплачено', 'Возврат от покупателя']),
         Sale.sale_date >= today - timedelta(days=365),
     ).group_by(month_expr).order_by(month_expr).all()
 
@@ -805,7 +823,7 @@ def dashboard():
     ).join(Product, Sale.product_id == Product.id
     ).outerjoin(Category, Product.category_id == Category.id
     ).filter(
-        Sale.status == 'Оплачено',
+        Sale.status.in_(['Оплачено', 'Возврат от покупателя']),
         Sale.sale_date >= month_start,
         Sale.sale_date <= today,
     ).group_by(cat_expr).order_by(func.sum(Sale.sale_price).desc()).all()

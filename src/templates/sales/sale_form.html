@@ -17,26 +17,16 @@
                 {% for product in products %}
                 <option value="{{ product.id }}"
                         {% if sale and sale.product_id == product.id %}selected{% endif %}>
-                    {{ product.product_name }} ({{ product.price }} руб.)
+                    {{ product.product_name }} ({{ product.price }} ₽)
                 </option>
                 {% endfor %}
             </select>
         {% endif %}
     </div>
     <div class="form-group">
-        <label for="sale_date">Дата продажи:</label>
+        <label for="sale_date">Дата:</label>
         <input type="date" id="sale_date" name="sale_date" class="form-control" required
                value="{{ sale.sale_date if sale else '' }}">
-    </div>
-    <div class="form-group">
-        <label for="sale_price">Цена продажи:</label>
-        <input type="number" step="0.01" min="0" id="sale_price" name="sale_price" class="form-control" required
-               value="{{ sale.sale_price if sale else '' }}">
-    </div>
-    <div class="form-group">
-        <label for="commission">Комиссия:</label>
-        <input type="number" step="0.01" min="0" id="commission" name="commission" class="form-control" required
-               value="{{ sale.commission if sale else '' }}">
     </div>
     <div class="form-group">
         <label for="status">Статус:</label>
@@ -50,6 +40,30 @@
             {% endif %}
         </select>
     </div>
+    <div class="form-group">
+        <label for="sale_price">
+            Цена продажи:
+            <small id="price_hint" class="text-muted"></small>
+        </label>
+        <input type="number" step="0.01" id="sale_price" name="sale_price" class="form-control" required
+               value="{{ sale.sale_price if sale else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="commission">
+            Комиссия:
+            <small id="commission_hint" class="text-muted"></small>
+        </label>
+        <input type="number" step="0.01" id="commission" name="commission" class="form-control" required
+               value="{{ sale.commission if sale else '' }}">
+    </div>
+
+    {% if not sale %}
+    <div id="return_notice" class="alert alert-warning" style="display:none;">
+        <i class="fas fa-info-circle"></i>
+        Возврат от покупателя: суммы автоматически сохранятся как отрицательные (сторно).
+    </div>
+    {% endif %}
+
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if sale else "Добавить" }}</button>
     {% if preset_product %}
         <a href="{{ url_for('product_detail', product_id=preset_product.id) }}" class="btn btn-secondary">Отмена</a>
@@ -57,4 +71,49 @@
         <a href="{{ url_for('sales_list') }}" class="btn btn-secondary">Отмена</a>
     {% endif %}
 </form>
+{% endblock %}
+
+{% block scripts %}
+{% if not sale %}
+<script>
+const statusSelect = document.getElementById('status');
+const salePriceInput = document.getElementById('sale_price');
+const commissionInput = document.getElementById('commission');
+const returnNotice = document.getElementById('return_notice');
+
+{% if last_paid_sale %}
+const lastPrice = {{ last_paid_sale.sale_price | float }};
+const lastCommission = {{ last_paid_sale.commission | float }};
+{% else %}
+const lastPrice = null;
+const lastCommission = null;
+{% endif %}
+
+function applyReturnMode(isReturn) {
+    if (isReturn) {
+        returnNotice.style.display = '';
+        if (lastPrice !== null) {
+            salePriceInput.value = (-Math.abs(lastPrice)).toFixed(2);
+            commissionInput.value = (-Math.abs(lastCommission)).toFixed(2);
+        }
+    } else {
+        returnNotice.style.display = 'none';
+        if (lastPrice !== null) {
+            // Только если поля ещё не заполнены вручную
+            if (parseFloat(salePriceInput.value) < 0) salePriceInput.value = '';
+            if (parseFloat(commissionInput.value) < 0) commissionInput.value = '';
+        }
+    }
+}
+
+statusSelect.addEventListener('change', function() {
+    applyReturnMode(this.value === 'Возврат от покупателя');
+});
+
+// При загрузке страницы, если уже выбран возврат
+if (statusSelect.value === 'Возврат от покупателя') {
+    applyReturnMode(true);
+}
+</script>
+{% endif %}
 {% endblock %}

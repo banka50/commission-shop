@@ -75,6 +75,8 @@ CREATE TABLE product_images (
 );
 
 -- Продажи
+-- sale_price и commission: положительные для обычных продаж,
+-- отрицательные (сторно) для возвратов от покупателя.
 CREATE TABLE sales (
     id          SERIAL PRIMARY KEY,
     sale_date   DATE           NOT NULL,

@@ -195,8 +195,8 @@ SALES = [
     {'sale_date': '2025-09-22', 'product_id': 21, 'sale_price': 9800.00, 'commission': 2940.00, 'status': 'Оплачено'},            # Наушники   → Продан
     {'sale_date': '2025-09-28', 'product_id': 18, 'sale_price': 2200.00, 'commission': 440.00,  'status': 'Оплачено'},            # Статуэтка  → Продан
     # ─── Октябрь 2025 ─────────────────────────────────────────────────────
-    {'sale_date': '2025-10-01', 'product_id': 5,  'sale_price': 3200.00, 'commission': 800.00,  'status': 'Возврат от покупателя'},# Ботинки  → На витрине
-    {'sale_date': '2025-10-01', 'product_id': 9,  'sale_price': 2800.00, 'commission': 560.00,  'status': 'Возврат от покупателя'},# Сумка    → На витрине
+    {'sale_date': '2025-10-01', 'product_id': 5,  'sale_price': -3200.00, 'commission': -800.00,  'status': 'Возврат от покупателя'},# Ботинки  → На витрине
+    {'sale_date': '2025-10-01', 'product_id': 9,  'sale_price': -2800.00, 'commission': -560.00,  'status': 'Возврат от покупателя'},# Сумка    → На витрине
     {'sale_date': '2025-10-03', 'product_id': 2,  'sale_price': 6800.00, 'commission': 1700.00, 'status': 'Оплачено'},            # Куртка     → Продан
     {'sale_date': '2025-10-08', 'product_id': 10, 'sale_price': 1500.00, 'commission': 300.00,  'status': 'Оплачено'},            # Шарф       → Продан
     {'sale_date': '2025-10-10', 'product_id': 7,  'sale_price': 2100.00, 'commission': 525.00,  'status': 'Оплачено'},            # Туфли      → Продан
@@ -204,16 +204,16 @@ SALES = [
     {'sale_date': '2025-10-15', 'product_id': 9,  'sale_price': 3000.00, 'commission': 600.00,  'status': 'Оплачено'},            # Сумка      → Продан (повторно)
     {'sale_date': '2025-10-18', 'product_id': 23, 'sale_price': 4500.00, 'commission': 900.00,  'status': 'Оплачено'},            # Книга      → Продан
     {'sale_date': '2025-10-22', 'product_id': 12, 'sale_price': 1900.00, 'commission': 475.00,  'status': 'Оплачено'},            # Клатч      → Продан
-    {'sale_date': '2025-10-25', 'product_id': 7,  'sale_price': 2100.00, 'commission': 525.00,  'status': 'Возврат от покупателя'},# Туфли   → На витрине → потом RET-001
+    {'sale_date': '2025-10-25', 'product_id': 7,  'sale_price': -2100.00, 'commission': -525.00,  'status': 'Возврат от покупателя'},# Туфли   → На витрине → потом RET-001
     # ─── Ноябрь 2025 ──────────────────────────────────────────────────────
     {'sale_date': '2025-11-02', 'product_id': 6,  'sale_price': 5400.00, 'commission': 1350.00, 'status': 'Оплачено'},            # Сапоги     → Продан
-    {'sale_date': '2025-11-05', 'product_id': 13, 'sale_price': 12500.00,'commission': 3125.00, 'status': 'Возврат от покупателя'},# Часы    → На витрине
-    {'sale_date': '2025-11-08', 'product_id': 16, 'sale_price': 8900.00, 'commission': 2225.00, 'status': 'Возврат от покупателя'},# Сервиз  → На витрине
-    {'sale_date': '2025-11-12', 'product_id': 21, 'sale_price': 9800.00, 'commission': 2940.00, 'status': 'Возврат от покупателя'},# Наушники→ На витрине
+    {'sale_date': '2025-11-05', 'product_id': 13, 'sale_price': -12500.00,'commission': -3125.00, 'status': 'Возврат от покупателя'},# Часы    → На витрине
+    {'sale_date': '2025-11-08', 'product_id': 16, 'sale_price': -8900.00, 'commission': -2225.00, 'status': 'Возврат от покупателя'},# Сервиз  → На витрине
+    {'sale_date': '2025-11-12', 'product_id': 21, 'sale_price': -9800.00, 'commission': -2940.00, 'status': 'Возврат от покупателя'},# Наушники→ На витрине
     {'sale_date': '2025-11-18', 'product_id': 20, 'sale_price': 11000.00,'commission': 3300.00, 'status': 'Оплачено'},            # Планшет    → Продан
-    {'sale_date': '2025-11-22', 'product_id': 18, 'sale_price': 2200.00, 'commission': 440.00,  'status': 'Возврат от покупателя'},# Статуэтка→ На витрине
-    {'sale_date': '2025-11-25', 'product_id': 19, 'sale_price': 14500.00,'commission': 4350.00, 'status': 'Возврат от покупателя'},# Фотоап. → На витрине
-    {'sale_date': '2025-11-28', 'product_id': 20, 'sale_price': 11000.00,'commission': 3300.00, 'status': 'Возврат от покупателя'},# Планшет → На витрине
+    {'sale_date': '2025-11-22', 'product_id': 18, 'sale_price': -2200.00, 'commission': -440.00,  'status': 'Возврат от покупателя'},# Статуэтка→ На витрине
+    {'sale_date': '2025-11-25', 'product_id': 19, 'sale_price': -14500.00,'commission': -4350.00, 'status': 'Возврат от покупателя'},# Фотоап. → На витрине
+    {'sale_date': '2025-11-28', 'product_id': 20, 'sale_price': -11000.00,'commission': -3300.00, 'status': 'Возврат от покупателя'},# Планшет → На витрине
     # ─── Декабрь 2025 ─────────────────────────────────────────────────────
     {'sale_date': '2025-12-03', 'product_id': 13, 'sale_price': 13000.00,'commission': 3250.00, 'status': 'Оплачено'},            # Часы       → Продан
     {'sale_date': '2025-12-08', 'product_id': 16, 'sale_price': 9200.00, 'commission': 2300.00, 'status': 'Оплачено'},            # Сервиз     → Продан
@@ -221,11 +221,11 @@ SALES = [
     {'sale_date': '2025-12-18', 'product_id': 18, 'sale_price': 2400.00, 'commission': 480.00,  'status': 'Оплачено'},            # Статуэтка  → Продан
     {'sale_date': '2025-12-22', 'product_id': 19, 'sale_price': 15000.00,'commission': 4500.00, 'status': 'Оплачено'},            # Фотоап.    → Продан
     # ─── Январь 2026 ──────────────────────────────────────────────────────
-    {'sale_date': '2026-01-05', 'product_id': 2,  'sale_price': 6800.00, 'commission': 1700.00, 'status': 'Возврат от покупателя'},# Куртка  → На витрине
-    {'sale_date': '2026-01-08', 'product_id': 10, 'sale_price': 1500.00, 'commission': 300.00,  'status': 'Возврат от покупателя'},# Шарф    → На витрине
-    {'sale_date': '2026-01-10', 'product_id': 13, 'sale_price': 13000.00,'commission': 3250.00, 'status': 'Возврат от покупателя'},# Часы    → На витрине
-    {'sale_date': '2026-01-12', 'product_id': 23, 'sale_price': 4500.00, 'commission': 900.00,  'status': 'Возврат от покупателя'},# Книга   → На витрине
-    {'sale_date': '2026-01-15', 'product_id': 12, 'sale_price': 1900.00, 'commission': 475.00,  'status': 'Возврат от покупателя'},# Клатч   → На витрине
+    {'sale_date': '2026-01-05', 'product_id': 2,  'sale_price': -6800.00, 'commission': -1700.00, 'status': 'Возврат от покупателя'},# Куртка  → На витрине
+    {'sale_date': '2026-01-08', 'product_id': 10, 'sale_price': -1500.00, 'commission': -300.00,  'status': 'Возврат от покупателя'},# Шарф    → На витрине
+    {'sale_date': '2026-01-10', 'product_id': 13, 'sale_price': -13000.00,'commission': -3250.00, 'status': 'Возврат от покупателя'},# Часы    → На витрине
+    {'sale_date': '2026-01-12', 'product_id': 23, 'sale_price': -4500.00, 'commission': -900.00,  'status': 'Возврат от покупателя'},# Книга   → На витрине
+    {'sale_date': '2026-01-15', 'product_id': 12, 'sale_price': -1900.00, 'commission': -475.00,  'status': 'Возврат от покупателя'},# Клатч   → На витрине
     # ─── Февраль 2026 ─────────────────────────────────────────────────────
     {'sale_date': '2026-02-03', 'product_id': 2,  'sale_price': 7000.00, 'commission': 1750.00, 'status': 'Оплачено'},            # Куртка     → Продан
     {'sale_date': '2026-02-07', 'product_id': 10, 'sale_price': 1600.00, 'commission': 320.00,  'status': 'Оплачено'},            # Шарф       → Продан
@@ -233,18 +233,18 @@ SALES = [
     {'sale_date': '2026-02-14', 'product_id': 23, 'sale_price': 4800.00, 'commission': 960.00,  'status': 'Оплачено'},            # Книга      → Продан
     {'sale_date': '2026-02-18', 'product_id': 12, 'sale_price': 2000.00, 'commission': 500.00,  'status': 'Оплачено'},            # Клатч      → Продан
     # ─── Март 2026 ────────────────────────────────────────────────────────
-    {'sale_date': '2026-03-05', 'product_id': 16, 'sale_price': 9200.00, 'commission': 2300.00, 'status': 'Возврат от покупателя'},# Сервиз  → На витрине
-    {'sale_date': '2026-03-08', 'product_id': 21, 'sale_price': 10000.00,'commission': 3000.00, 'status': 'Возврат от покупателя'},# Наушники→ На витрине
-    {'sale_date': '2026-03-12', 'product_id': 18, 'sale_price': 2400.00, 'commission': 480.00,  'status': 'Возврат от покупателя'},# Статуэтка→ На витрине
-    {'sale_date': '2026-03-15', 'product_id': 19, 'sale_price': 15000.00,'commission': 4500.00, 'status': 'Возврат от покупателя'},# Фотоап. → На витрине
+    {'sale_date': '2026-03-05', 'product_id': 16, 'sale_price': -9200.00, 'commission': -2300.00, 'status': 'Возврат от покупателя'},# Сервиз  → На витрине
+    {'sale_date': '2026-03-08', 'product_id': 21, 'sale_price': -10000.00,'commission': -3000.00, 'status': 'Возврат от покупателя'},# Наушники→ На витрине
+    {'sale_date': '2026-03-12', 'product_id': 18, 'sale_price': -2400.00, 'commission': -480.00,  'status': 'Возврат от покупателя'},# Статуэтка→ На витрине
+    {'sale_date': '2026-03-15', 'product_id': 19, 'sale_price': -15000.00,'commission': -4500.00, 'status': 'Возврат от покупателя'},# Фотоап. → На витрине
     # ─── Апрель 2026 ──────────────────────────────────────────────────────
     {'sale_date': '2026-04-02', 'product_id': 16, 'sale_price': 9500.00, 'commission': 2375.00, 'status': 'Оплачено'},            # Сервиз     → Продан
-    {'sale_date': '2026-04-05', 'product_id': 6,  'sale_price': 5400.00, 'commission': 1350.00, 'status': 'Возврат от покупателя'},# Сапоги  → На витрине
+    {'sale_date': '2026-04-05', 'product_id': 6,  'sale_price': -5400.00, 'commission': -1350.00, 'status': 'Возврат от покупателя'},# Сапоги  → На витрине
     {'sale_date': '2026-04-08', 'product_id': 21, 'sale_price': 10500.00,'commission': 3150.00, 'status': 'Оплачено'},            # Наушники   → Продан
     {'sale_date': '2026-04-12', 'product_id': 18, 'sale_price': 2500.00, 'commission': 500.00,  'status': 'Оплачено'},            # Статуэтка  → Продан
     {'sale_date': '2026-04-18', 'product_id': 19, 'sale_price': 15500.00,'commission': 4650.00, 'status': 'Оплачено'},            # Фотоап.    → Продан
-    {'sale_date': '2026-04-22', 'product_id': 2,  'sale_price': 7000.00, 'commission': 1750.00, 'status': 'Возврат от покупателя'},# Куртка  → На витрине
-    {'sale_date': '2026-04-25', 'product_id': 13, 'sale_price': 13500.00,'commission': 3375.00, 'status': 'Возврат от покупателя'},# Часы    → На витрине
+    {'sale_date': '2026-04-22', 'product_id': 2,  'sale_price': -7000.00, 'commission': -1750.00, 'status': 'Возврат от покупателя'},# Куртка  → На витрине
+    {'sale_date': '2026-04-25', 'product_id': 13, 'sale_price': -13500.00,'commission': -3375.00, 'status': 'Возврат от покупателя'},# Часы    → На витрине
     # ─── Май 2026 (текущий месяц) ─────────────────────────────────────────
     {'sale_date': '2026-05-02', 'product_id': 6,  'sale_price': 5800.00, 'commission': 1450.00, 'status': 'Оплачено'},            # Сапоги     → Продан
     {'sale_date': '2026-05-07', 'product_id': 2,  'sale_price': 7200.00, 'commission': 1800.00, 'status': 'Оплачено'},            # Куртка     → Продан
