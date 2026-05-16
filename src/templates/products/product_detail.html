@@ -93,8 +93,9 @@
         </tr>
     </thead>
     <tbody>
+        {% set last_sale = product.sales | last %}
         {% for sale in product.sales %}
-        <tr>
+        <tr {% if sale.id == last_sale.id %}class="table-active font-weight-bold"{% endif %}>
             <td>{{ sale.sale_date }}</td>
             <td>{{ sale.sale_price }} ₽</td>
             <td>{{ sale.commission }} ₽</td>
