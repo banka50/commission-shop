@@ -4,6 +4,7 @@ db = SQLAlchemy()
 
 
 class Consignor(db.Model):
+    """Комитент."""
     __tablename__ = 'consignors'
 
     id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор комитента
@@ -51,6 +52,7 @@ class SalesReport(db.Model):
 
 
 class Product(db.Model):
+    """Товар."""
     __tablename__ = 'products'
 
     id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор товара
@@ -63,9 +65,23 @@ class Product(db.Model):
 
     consignor_report = db.relationship('ConsignorReport', back_populates='products')
     sales = db.relationship('Sale', back_populates='product', lazy=True, order_by='Sale.sale_date')
+    images = db.relationship('ProductImage', back_populates='product', lazy=True,
+                             cascade='all, delete-orphan')
+
+
+class ProductImage(db.Model):
+    """Фотография товара, хранится на файловой системе."""
+    __tablename__ = 'product_images'
+
+    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор
+    filename = db.Column(db.String(255), nullable=False)  # Имя файла
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)  # Идентификатор товара
+
+    product = db.relationship('Product', back_populates='images')
 
 
 class Sale(db.Model):
+    """Продажа товара."""
     __tablename__ = 'sales'
 
     id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор продажи

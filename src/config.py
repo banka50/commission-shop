@@ -57,3 +57,6 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = _get('SECRET_KEY', _app_section, 'secret_key', 'supersecretkey')
     SQLALCHEMY_DATABASE_URI = _build_uri(_toml)
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 МБ
+    ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'gif'}

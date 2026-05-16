@@ -8,6 +8,7 @@
 <table class="table table-striped">
     <thead>
         <tr>
+            <th></th>
             <th>Наименование</th>
             <th>Описание</th>
             <th>Дата доставки</th>
@@ -21,6 +22,12 @@
     <tbody>
         {% for product in products %}
         <tr>
+            <td>
+                {% if product.images %}
+                <img src="{{ url_for('static', filename='uploads/' + product.images[0].filename) }}"
+                     alt="" style="height: 40px; width: 40px; object-fit: cover; border-radius: 4px;">
+                {% endif %}
+            </td>
             <td>{{ product.product_name }}</td>
             <td>{{ product.description }}</td>
             <td>{{ product.delivery_date }}</td>

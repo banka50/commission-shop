@@ -2,8 +2,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import os
 from flask import Flask, render_template, redirect, url_for, request, flash
-from models import db, Consignor, ConsignorReport, SalesReport, Sale, Product
+from werkzeug.utils import secure_filename
+from models import db, Consignor, ConsignorReport, SalesReport, Sale, Product, ProductImage
 from config import Config
 
 from datetime import datetime
@@ -12,6 +14,27 @@ from decimal import Decimal
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
+
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+def _allowed_file(filename: str) -> bool:
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+
+def _save_images(files) -> list[str]:
+    """Сохраняет список загруженных файлов, возвращает имена сохранённых файлов."""
+    saved = []
+    for file in files:
+        if not file or not file.filename:
+            continue
+        if not _allowed_file(file.filename):
+            continue
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        saved.append(filename)
+    return saved
 
 
 # Для тестирования
@@ -507,6 +530,7 @@ def add_product():
         expiry_date = datetime.strptime(request.form['expiry_date'], '%Y-%m-%d')
         price = request.form['price']
         consignor_report_id = request.form['consignor_report_id']
+        image_filenames = _save_images(request.files.getlist('images'))
 
         new_product = Product(
             product_name=product_name,
@@ -517,6 +541,9 @@ def add_product():
             consignor_report_id=consignor_report_id,
         )
         db.session.add(new_product)
+        db.session.flush()  # получить new_product.id до commit
+        for fn in image_filenames:
+            db.session.add(ProductImage(filename=fn, product_id=new_product.id))
         db.session.commit()
         flash('Товар успешно добавлен!', 'success')
 
@@ -549,6 +576,21 @@ def edit_product(product_id):
         product.expiry_date = datetime.strptime(request.form['expiry_date'], '%Y-%m-%d').date()
         product.price = request.form['price']
         product.consignor_report_id = request.form['consignor_report_id']
+
+        # Удалить отмеченные фотографии
+        ids_to_delete = request.form.getlist('delete_image_ids')
+        for image_id in ids_to_delete:
+            img = ProductImage.query.get(int(image_id))
+            if img and img.product_id == product.id:
+                img_path = os.path.join(app.config['UPLOAD_FOLDER'], img.filename)
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+                db.session.delete(img)
+
+        new_images = _save_images(request.files.getlist('images'))
+        for fn in new_images:
+            db.session.add(ProductImage(filename=fn, product_id=product.id))
+
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
@@ -565,11 +607,45 @@ def delete_product(product_id):
     if product.sales:
         flash('Товар нельзя удалить, так как есть связанные с ним продажи.', 'error')
         return redirect(url_for('products_list'))
+
+    for img in product.images:
+        img_path = os.path.join(app.config['UPLOAD_FOLDER'], img.filename)
+        if os.path.exists(img_path):
+            os.remove(img_path)
+
     db.session.delete(product)
     db.session.commit()
     flash('Товар успешно удалён!', 'success')
 
     return redirect(url_for('products_list'))
+
+
+@app.route('/delete_product_image/<int:image_id>', methods=['POST'])
+def delete_product_image(image_id):
+    image = ProductImage.query.get_or_404(image_id)
+    product_id = image.product_id
+    back = request.form.get('back', 'edit')
+    img_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
+    if os.path.exists(img_path):
+        os.remove(img_path)
+    db.session.delete(image)
+    db.session.commit()
+    flash('Фотография удалена.', 'success')
+    if back == 'detail':
+        return redirect(url_for('product_detail', product_id=product_id))
+    return redirect(url_for('edit_product', product_id=product_id))
+
+
+@app.route('/upload_product_images/<int:product_id>', methods=['POST'])
+def upload_product_images(product_id):
+    product = Product.query.get_or_404(product_id)
+    saved = _save_images(request.files.getlist('images'))
+    for fn in saved:
+        db.session.add(ProductImage(filename=fn, product_id=product.id))
+    db.session.commit()
+    if saved:
+        flash(f'Загружено фотографий: {len(saved)}.', 'success')
+    return redirect(url_for('product_detail', product_id=product_id))
 
 
 if __name__ == "__main__":

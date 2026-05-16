@@ -2,6 +2,8 @@ __pycache__/
 *.pyc
 .idea/
 .venv/
+src/static/uploads/
+!src/static/uploads/.gitkeep
 src/.env
 src/config.toml
 src/instance/

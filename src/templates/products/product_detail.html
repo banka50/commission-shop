@@ -1,21 +1,67 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Товар</h1>
-<p><strong>Наименование:</strong> {{ product.product_name }}</p>
-<p><strong>Описание:</strong> {{ product.description }}</p>
-<p><strong>Дата доставки:</strong> {{ product.delivery_date }}</p>
-<p><strong>Срок реализации:</strong> {{ product.expiry_date }}</p>
-<p><strong>Цена:</strong> {{ product.price }} ₽</p>
+<h1>{{ product.product_name }}</h1>
 
-{% if consignor_report %}
-<p>
-    <strong>Акт приёма:</strong> {{ consignor_report.number }}
-    <a href="{{ url_for('consignor_report_detail', consignor_report_id=product.consignor_report_id) }}" class="btn btn-primary btn-sm ml-2">
-        <i class="fas fa-file-alt"></i> Перейти к акту
-    </a>
-</p>
+<div class="row">
+    <div class="col-md-8">
+        <p><strong>Описание:</strong> {{ product.description }}</p>
+        <p><strong>Дата доставки:</strong> {{ product.delivery_date }}</p>
+        <p><strong>Срок реализации:</strong> {{ product.expiry_date }}</p>
+        <p><strong>Цена:</strong> {{ product.price }} ₽</p>
+
+        {% if consignor_report %}
+        <p>
+            <strong>Акт приёма:</strong> {{ consignor_report.number }}
+            <a href="{{ url_for('consignor_report_detail', consignor_report_id=product.consignor_report_id) }}" class="btn btn-primary btn-sm ml-2">
+                <i class="fas fa-file-alt"></i> Перейти к акту
+            </a>
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<h4 class="mt-4">Фотографии</h4>
+
+{% if product.images %}
+<div class="d-flex flex-wrap mb-3" style="gap: 10px;">
+    {% for img in product.images %}
+    <div class="text-center">
+        <a href="{{ url_for('static', filename='uploads/' + img.filename) }}" target="_blank">
+            <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
+                 alt="{{ product.product_name }}"
+                 style="height: 160px; width: 160px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6;">
+        </a>
+        <form action="{{ url_for('delete_product_image', image_id=img.id) }}" method="POST" style="margin-top: 4px;">
+            <input type="hidden" name="back" value="detail">
+            <button type="submit" class="btn btn-danger btn-sm"
+                    onclick="return confirm('Удалить фото?');" style="width: 160px;">
+                <i class="fas fa-trash-alt"></i> Удалить
+            </button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-muted">Фотографий нет.</p>
 {% endif %}
+
+<form action="{{ url_for('upload_product_images', product_id=product.id) }}" method="POST"
+      enctype="multipart/form-data" class="mb-4">
+    <div class="input-group" style="max-width: 500px;">
+        <div class="custom-file">
+            <input type="file" id="images" name="images" class="custom-file-input"
+                   accept=".jpg,.jpeg,.png,.webp,.gif" multiple>
+            <label class="custom-file-label" for="images" data-browse="Обзор">Файлы не выбраны</label>
+        </div>
+        <div class="input-group-append">
+            <button type="submit" class="btn btn-outline-secondary">
+                <i class="fas fa-upload"></i> Загрузить
+            </button>
+        </div>
+    </div>
+    <small class="text-muted">Форматы: jpg, jpeg, png, webp, gif. Можно выбрать несколько файлов.</small>
+</form>
 
 <h4 class="mt-4">История продаж</h4>
 {% if product.sales %}
@@ -53,8 +99,26 @@
     <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-success">
         <i class="fas fa-plus"></i> Оформить продажу
     </a>
+    <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-warning">
+        <i class="fas fa-edit"></i> Редактировать
+    </a>
     <a href="{{ url_for('products_list') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к товарам
     </a>
 </div>
+
+{% block scripts %}
+<script>
+document.getElementById('images').addEventListener('change', function () {
+    const label = this.nextElementSibling;
+    if (this.files.length === 0) {
+        label.textContent = 'Файлы не выбраны';
+    } else if (this.files.length === 1) {
+        label.textContent = this.files[0].name;
+    } else {
+        label.textContent = 'Выбрано файлов: ' + this.files.length;
+    }
+});
+</script>
+{% endblock %}
 {% endblock %}

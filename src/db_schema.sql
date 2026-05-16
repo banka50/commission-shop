@@ -55,6 +55,15 @@ CREATE TABLE IF NOT EXISTS products (
     CONSTRAINT products_fk1 FOREIGN KEY (consignor_report_id) REFERENCES consignor_reports (id)
 );
 
+-- Фотографии товара (хранятся на файловой системе)
+CREATE TABLE IF NOT EXISTS product_images (
+    id         serial       NOT NULL,
+    filename   varchar(255) NOT NULL,
+    product_id integer      NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT product_images_fk1 FOREIGN KEY (product_id) REFERENCES products (id)
+);
+
 CREATE TABLE IF NOT EXISTS sales (
     id         serial          NOT NULL,
     sale_date  date            NOT NULL,

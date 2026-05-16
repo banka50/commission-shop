@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{ "Редактирование товара" if product else "Добавление товара" }}</h1>
 
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
     <div class="form-group">
         <label for="product_name">Наименование:</label>
         <input type="text" id="product_name" name="product_name" class="form-control" required
@@ -28,6 +28,43 @@
         <label for="price">Цена:</label>
         <input type="number" step="0.01" min="0" id="price" name="price" class="form-control" required
                value="{{ product.price if product else '' }}">
+    </div>
+    <div class="form-group">
+        <label>Фотографии товара:</label>
+        {% if product and product.images %}
+            <div class="d-flex flex-wrap mb-2" style="gap: 8px;" id="existing-images">
+                {% for img in product.images %}
+                <div class="text-center" id="img-wrapper-{{ img.id }}">
+                    <a href="{{ url_for('static', filename='uploads/' + img.filename) }}" target="_blank">
+                        <img id="img-thumb-{{ img.id }}"
+                             src="{{ url_for('static', filename='uploads/' + img.filename) }}"
+                             alt="" title="{{ img.filename }}"
+                             style="height: 100px; width: 100px; object-fit: cover; border-radius: 4px; display: block;">
+                    </a>
+                    <div class="text-muted mt-1"
+                         style="font-size:0.75rem;width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;"
+                         title="{{ img.filename }}">{{ img.filename }}</div>
+                    <input type="checkbox" name="delete_image_ids" value="{{ img.id }}"
+                           id="del-check-{{ img.id }}" style="display:none;">
+                    <button type="button" class="btn btn-outline-danger btn-sm mt-1"
+                            style="width: 100px;"
+                            onclick="toggleDeleteMark({{ img.id }})">
+                        <i class="fas fa-trash-alt"></i> Удалить
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            <small class="text-muted">Отмеченные фотографии будут удалены при сохранении.</small>
+        {% endif %}
+        <div class="input-group mt-2">
+            <div class="custom-file">
+                <input type="file" id="images" name="images" class="custom-file-input"
+                       accept=".jpg,.jpeg,.png,.webp,.gif" multiple>
+                <label class="custom-file-label" for="images" data-browse="Обзор">Файлы не выбраны</label>
+            </div>
+        </div>
+        <small class="text-muted">Можно выбрать несколько файлов одновременно</small>
+        <div id="new-images-preview" class="d-flex flex-wrap mt-2" style="gap: 8px;"></div>
     </div>
     <div class="form-group">
         <label>Акт приёма:</label>
@@ -56,4 +93,108 @@
         <a href="{{ url_for('products_list') }}" class="btn btn-secondary">Отмена</a>
     {% endif %}
 </form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleDeleteMark(imgId) {
+    const checkbox = document.getElementById('del-check-' + imgId);
+    const thumb    = document.getElementById('img-thumb-' + imgId);
+    const wrapper  = document.getElementById('img-wrapper-' + imgId);
+    const btn      = wrapper.querySelector('button');
+
+    checkbox.checked = !checkbox.checked;
+
+    if (checkbox.checked) {
+        thumb.style.opacity = '0.3';
+        thumb.style.border  = '2px solid #dc3545';
+        btn.className = 'btn btn-danger btn-sm mt-1';
+        btn.innerHTML = '<i class="fas fa-undo"></i> Отменить';
+    } else {
+        thumb.style.opacity = '1';
+        thumb.style.border  = 'none';
+        btn.className = 'btn btn-outline-danger btn-sm mt-1';
+        btn.innerHTML = '<i class="fas fa-trash-alt"></i> Удалить';
+    }
+}
+
+(function () {
+    const input   = document.getElementById('images');
+    const label   = input.nextElementSibling;
+    const preview = document.getElementById('new-images-preview');
+
+    let selectedFiles = [];
+
+    function updateLabel() {
+        if (selectedFiles.length === 0) {
+            label.textContent = 'Файлы не выбраны';
+        } else if (selectedFiles.length === 1) {
+            label.textContent = selectedFiles[0].name;
+        } else {
+            label.textContent = 'Выбрано файлов: ' + selectedFiles.length;
+        }
+    }
+
+    function syncInput() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(function (f) { dt.items.add(f); });
+        input.files = dt.files;
+    }
+
+    function renderPreviews() {
+        preview.innerHTML = '';
+        selectedFiles.forEach(function (file, idx) {
+            const objectUrl = URL.createObjectURL(file);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'text-center';
+            wrapper.style.position = 'relative';
+
+            const link = document.createElement('a');
+            link.href   = objectUrl;
+            link.target = '_blank';
+
+            const img = document.createElement('img');
+            img.src   = objectUrl;
+            img.style.cssText = 'height:100px;width:100px;object-fit:cover;border-radius:4px;border:2px dashed #28a745;display:block;';
+            img.title = file.name;
+            link.appendChild(img);
+
+            const name = document.createElement('div');
+            name.className = 'text-muted mt-1';
+            name.style.cssText = 'font-size:0.75rem;width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;';
+            name.textContent = file.name;
+            name.title = file.name;
+
+            const btn = document.createElement('button');
+            btn.type      = 'button';
+            btn.className = 'btn btn-outline-danger btn-sm mt-1';
+            btn.style.width = '100px';
+            btn.innerHTML = '<i class="fas fa-times"></i> Убрать';
+            btn.addEventListener('click', function () {
+                URL.revokeObjectURL(objectUrl);
+                selectedFiles.splice(idx, 1);
+                syncInput();
+                updateLabel();
+                renderPreviews();
+            });
+
+            wrapper.appendChild(link);
+            wrapper.appendChild(name);
+            wrapper.appendChild(btn);
+            preview.appendChild(wrapper);
+        });
+    }
+
+    input.addEventListener('change', function () {
+        Array.from(this.files).forEach(function (f) {
+            selectedFiles.push(f);
+        });
+        syncInput();
+        updateLabel();
+        renderPreviews();
+    });
+})();
+</script>
 {% endblock %}
