@@ -8,24 +8,52 @@
 <p><strong>Срок реализации:</strong> {{ product.expiry_date }}</p>
 <p><strong>Цена:</strong> {{ product.price }}</p>
 
-<div class="actions d-flex flex-column align-items-start mb-3">
-    {% if consignor_report %}
-        <div class="d-flex align-items-center mb-2">
-            <p class="mb-0 mr-3"><strong>Акт приёма:</strong> {{ consignor_report.number }}</p>
-            <a href="{{ url_for('consignor_report_detail', consignor_report_id=product.consignor_report_id) }}" class="btn btn-primary">
-                <i class="fas fa-file-alt"></i> Перейти к акту приёма
-            </a>
-        </div>
-    {% endif %}
-    {% if sale %}
-        <div class="d-flex align-items-center">
-            <p class="mb-0 mr-3"><strong>Продажа:</strong> {{ sale.sale_date }}</p>
-            <a href="{{ url_for('sale_detail', sale_id=product.sale_id) }}" class="btn btn-primary">
-                <i class="fas fa-shopping-bag"></i> Перейти к продаже
-            </a>
-        </div>
-    {% endif %}
-    <a href="{{ url_for('products_list') }}" class="btn btn-primary mt-2">
+{% if consignor_report %}
+<p>
+    <strong>Акт приёма:</strong> {{ consignor_report.number }}
+    <a href="{{ url_for('consignor_report_detail', consignor_report_id=product.consignor_report_id) }}" class="btn btn-primary btn-sm ml-2">
+        <i class="fas fa-file-alt"></i> Перейти к акту
+    </a>
+</p>
+{% endif %}
+
+<h4 class="mt-4">История продаж</h4>
+{% if product.sales %}
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Цена продажи</th>
+            <th>Комиссия</th>
+            <th>Статус</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sale in product.sales %}
+        <tr>
+            <td>{{ sale.sale_date }}</td>
+            <td>{{ sale.sale_price }}</td>
+            <td>{{ sale.commission }}</td>
+            <td>{{ sale.status }}</td>
+            <td>
+                <a href="{{ url_for('sale_detail', sale_id=sale.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">Продаж ещё не было.</p>
+{% endif %}
+
+<div class="mt-3">
+    <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-success">
+        <i class="fas fa-plus"></i> Оформить продажу
+    </a>
+    <a href="{{ url_for('products_list') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к товарам
     </a>
 </div>

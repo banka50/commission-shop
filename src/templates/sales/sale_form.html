@@ -5,6 +5,25 @@
 
 <form method="POST">
     <div class="form-group">
+        <label>Товар:</label>
+        {% if preset_product %}
+            <p class="form-control-plaintext">
+                <strong>{{ preset_product.product_name }}</strong>
+            </p>
+            <input type="hidden" name="product_id" value="{{ preset_product.id }}">
+        {% else %}
+            <select id="product_id" name="product_id" class="form-control" required>
+                <option value="">Выбрать товар</option>
+                {% for product in products %}
+                <option value="{{ product.id }}"
+                        {% if sale and sale.product_id == product.id %}selected{% endif %}>
+                    {{ product.product_name }} ({{ product.price }} руб.)
+                </option>
+                {% endfor %}
+            </select>
+        {% endif %}
+    </div>
+    <div class="form-group">
         <label for="sale_date">Дата продажи:</label>
         <input type="date" id="sale_date" name="sale_date" class="form-control" required
                value="{{ sale.sale_date if sale else '' }}">
@@ -28,8 +47,10 @@
         </select>
     </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if sale else "Добавить" }}</button>
-    <a href="{{ url_for('sales_list') }}" class="btn btn-secondary">
-        Отмена
-    </a>
+    {% if preset_product %}
+        <a href="{{ url_for('product_detail', product_id=preset_product.id) }}" class="btn btn-secondary">Отмена</a>
+    {% else %}
+        <a href="{{ url_for('sales_list') }}" class="btn btn-secondary">Отмена</a>
+    {% endif %}
 </form>
 {% endblock %}

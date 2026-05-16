@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Список  товаров</h1>
+<h1>Список товаров</h1>
 <a href="{{ url_for('add_product') }}" class="btn btn-primary mb-3">
     <i class="fas fa-plus"></i> Добавить товар
 </a>
@@ -13,8 +13,8 @@
             <th>Дата доставки</th>
             <th>Срок реализации</th>
             <th>Цена</th>
-            <th>Отчёт</th>
-            <th>Продажа</th>
+            <th>Акт приёма</th>
+            <th>Последняя продажа</th>
             <th>Действия</th>
         </tr>
     </thead>
@@ -27,7 +27,13 @@
             <td>{{ product.expiry_date }}</td>
             <td>{{ product.price }}</td>
             <td>{{ consignor_reports[product.consignor_report_id] }}</td>
-            <td>{{ sales[product.sale_id] if product.sale_id else '' }}</td>
+            <td>
+                {% if product.sales %}
+                    {{ product.sales[-1].status }} ({{ product.sales[-1].sale_date }})
+                {% else %}
+                    <span class="text-muted">Не продавался</span>
+                {% endif %}
+            </td>
             <td>
                 <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-eye"></i> Показать

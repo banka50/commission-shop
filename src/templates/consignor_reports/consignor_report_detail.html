@@ -27,6 +27,7 @@
             <th>Цена</th>
             <th>Дата доставки</th>
             <th>Срок реализации</th>
+            <th>Статус продажи</th>
         </tr>
     </thead>
     <tbody>
@@ -38,6 +39,13 @@
             <td>{{ product.price }}</td>
             <td>{{ product.delivery_date }}</td>
             <td>{{ product.expiry_date }}</td>
+            <td>
+                {% if product.sales %}
+                    {{ product.sales[-1].status }}
+                {% else %}
+                    <span class="text-muted">Не продавался</span>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>

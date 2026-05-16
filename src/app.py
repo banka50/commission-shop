@@ -57,35 +57,38 @@ def insert_test_data():
     products = [
         {'id': 1, 'product_name': 'Пальто зимнее', 'description': 'Женское, размер 48, цвет чёрный',
          'delivery_date': '2023-09-15', 'expiry_date': '2024-03-15', 'price': 4500.00,
-         'consignor_report_id': 1, 'sale_id': None},
+         'consignor_report_id': 1},
         {'id': 2, 'product_name': 'Ботинки кожаные', 'description': 'Мужские, размер 42, коричневые',
          'delivery_date': '2023-09-20', 'expiry_date': '2024-02-20', 'price': 3200.00,
-         'consignor_report_id': 2, 'sale_id': 1},
+         'consignor_report_id': 2},
         {'id': 3, 'product_name': 'Сумка женская', 'description': 'Кожаная, среднего размера, бежевая',
          'delivery_date': '2023-10-01', 'expiry_date': '2024-04-01', 'price': 2800.50,
-         'consignor_report_id': 3, 'sale_id': None},
+         'consignor_report_id': 3},
         {'id': 4, 'product_name': 'Часы наручные', 'description': 'Механические, мужские, сталь',
          'delivery_date': '2023-09-25', 'expiry_date': '2024-01-25', 'price': 12500.00,
-         'consignor_report_id': 4, 'sale_id': 3},
+         'consignor_report_id': 4},
         {'id': 5, 'product_name': 'Сервиз чайный', 'description': 'Фарфор, 12 персон, позолота',
          'delivery_date': '2023-10-05', 'expiry_date': '2024-05-05', 'price': 8900.00,
-         'consignor_report_id': 5, 'sale_id': 4},
+         'consignor_report_id': 5},
         {'id': 6, 'product_name': 'Шарф пуховый', 'description': 'Оренбургский, белый, ажурный',
          'delivery_date': '2023-10-10', 'expiry_date': '2024-01-10', 'price': 1500.00,
-         'consignor_report_id': 1, 'sale_id': 5},
+         'consignor_report_id': 1},
     ]
 
     sales = [
         {'id': 1, 'sale_date': '2023-10-01', 'sale_price': 1500.00,
-         'commission': 150.00, 'status': 'Оплачено'},
+         'commission': 150.00, 'status': 'Оплачено', 'product_id': 2},
         {'id': 2, 'sale_date': '2023-10-02', 'sale_price': 3200.50,
-         'commission': 320.05, 'status': 'Ожидает'},
+         'commission': 320.05, 'status': 'Ожидает', 'product_id': 3},
         {'id': 3, 'sale_date': '2023-10-03', 'sale_price': 780.00,
-         'commission': 78.00, 'status': 'Оплачено'},
+         'commission': 78.00, 'status': 'Оплачено', 'product_id': 4},
         {'id': 4, 'sale_date': '2023-10-04', 'sale_price': 2100.00,
-         'commission': 210.00, 'status': 'Возврат'},
+         'commission': 210.00, 'status': 'Возврат', 'product_id': 5},
         {'id': 5, 'sale_date': '2023-10-05', 'sale_price': 540.75,
-         'commission': 54.08, 'status': 'Оплачено'},
+         'commission': 54.08, 'status': 'Оплачено', 'product_id': 6},
+        # Повторная продажа товара 5 после возврата
+        {'id': 6, 'sale_date': '2023-10-10', 'sale_price': 2200.00,
+         'commission': 220.00, 'status': 'Оплачено', 'product_id': 5},
     ]
 
     for consignor_data in consignors:
@@ -121,16 +124,6 @@ def insert_test_data():
         db.session.add(sr)
     db.session.flush()
 
-    for sale_data in sales:
-        sale = Sale(
-            sale_date=datetime.strptime(sale_data['sale_date'], '%Y-%m-%d').date(),
-            sale_price=sale_data['sale_price'],
-            commission=sale_data['commission'],
-            status=sale_data['status'],
-        )
-        db.session.add(sale)
-    db.session.flush()
-
     for product_data in products:
         product = Product(
             product_name=product_data['product_name'],
@@ -139,9 +132,19 @@ def insert_test_data():
             expiry_date=datetime.strptime(product_data['expiry_date'], '%Y-%m-%d').date(),
             price=product_data['price'],
             consignor_report_id=product_data['consignor_report_id'],
-            sale_id=product_data['sale_id'],
         )
         db.session.add(product)
+    db.session.flush()
+
+    for sale_data in sales:
+        sale = Sale(
+            sale_date=datetime.strptime(sale_data['sale_date'], '%Y-%m-%d').date(),
+            sale_price=sale_data['sale_price'],
+            commission=sale_data['commission'],
+            status=sale_data['status'],
+            product_id=sale_data['product_id'],
+        )
+        db.session.add(sale)
 
     db.session.commit()
 
@@ -409,24 +412,34 @@ def sales_list():
 
 @app.route('/add_sale', methods=['GET', 'POST'])
 def add_sale():
+    products = Product.query.all()
+    preset_product_id = request.args.get('product_id', type=int)
+    preset_product = Product.query.get(preset_product_id) if preset_product_id else None
+
     if request.method == 'POST':
         sale_date = datetime.strptime(request.form['sale_date'], '%Y-%m-%d').date()
         sale_price = Decimal(request.form['sale_price'])
         commission = Decimal(request.form['commission'])
         status = request.form['status']
+        product_id = request.form['product_id']
 
         new_sale = Sale(
             sale_date=sale_date,
             sale_price=sale_price,
             commission=commission,
-            status=status
+            status=status,
+            product_id=product_id
         )
         db.session.add(new_sale)
         db.session.commit()
         flash('Продажа успешно добавлена!', 'success')
+
+        if preset_product_id:
+            return redirect(url_for('product_detail', product_id=product_id))
         return redirect(url_for('sales_list'))
 
-    return render_template('sales/sale_form.html', sale=None)
+    return render_template('sales/sale_form.html', sale=None,
+                           products=products, preset_product=preset_product)
 
 
 @app.route('/sale/<int:sale_id>')
@@ -439,27 +452,26 @@ def sale_detail(sale_id):
 @app.route('/edit_sale/<int:sale_id>', methods=['GET', 'POST'])
 def edit_sale(sale_id):
     sale = Sale.query.get_or_404(sale_id)
+    products = Product.query.all()
 
     if request.method == 'POST':
         sale.sale_date = datetime.strptime(request.form['sale_date'], '%Y-%m-%d').date()
         sale.sale_price = Decimal(request.form['sale_price'])
         sale.commission = Decimal(request.form['commission'])
         sale.status = request.form['status']
+        sale.product_id = request.form['product_id']
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
         return redirect(url_for('sales_list'))
 
-    return render_template('sales/sale_form.html', sale=sale)
+    return render_template('sales/sale_form.html', sale=sale,
+                           products=products, preset_product=None)
 
 
 @app.route('/delete_sale/<int:sale_id>', methods=['POST'])
 def delete_sale(sale_id):
     sale = Sale.query.get_or_404(sale_id)
-
-    if sale.products:
-        flash('Продажу нельзя удалить, так как есть связанный с ней товар.', 'error')
-        return redirect(url_for('sales_list'))
     db.session.delete(sale)
     db.session.commit()
     flash('Продажа успешно удалена!', 'success')
@@ -476,18 +488,15 @@ def delete_sale(sale_id):
 def products_list():
     products = Product.query.all()
     consignor_reports = ConsignorReport.query.all()
-    sales = Sale.query.all()
     consignor_reports_dict = {cr.id: cr.number for cr in consignor_reports}
-    sales_dict = {sale.id: sale.status for sale in sales}
 
     return render_template('products/products_list.html', products=products,
-                           consignor_reports=consignor_reports_dict, sales=sales_dict)
+                           consignor_reports=consignor_reports_dict)
 
 
 @app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
     consignor_reports = ConsignorReport.query.all()
-    sales = Sale.query.all()
     preset_cr_id = request.args.get('consignor_report_id', type=int)
     preset_cr = ConsignorReport.query.get(preset_cr_id) if preset_cr_id else None
 
@@ -498,7 +507,6 @@ def add_product():
         expiry_date = datetime.strptime(request.form['expiry_date'], '%Y-%m-%d')
         price = request.form['price']
         consignor_report_id = request.form['consignor_report_id']
-        sale_id = request.form['sale_id'] or None
 
         new_product = Product(
             product_name=product_name,
@@ -507,7 +515,6 @@ def add_product():
             expiry_date=expiry_date,
             price=price,
             consignor_report_id=consignor_report_id,
-            sale_id=sale_id
         )
         db.session.add(new_product)
         db.session.commit()
@@ -518,7 +525,7 @@ def add_product():
         return redirect(url_for('products_list'))
 
     return render_template('products/product_form.html',
-                           consignor_reports=consignor_reports, sales=sales,
+                           consignor_reports=consignor_reports,
                            preset_consignor_report=preset_cr)
 
 
@@ -527,14 +534,13 @@ def product_detail(product_id):
     product = Product.query.get_or_404(product_id)
 
     return render_template('products/product_detail.html', product=product,
-                           consignor_report=product.consignor_report, sale=product.sale)
+                           consignor_report=product.consignor_report)
 
 
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
     product = Product.query.get_or_404(product_id)
     consignor_reports = ConsignorReport.query.all()
-    sales = Sale.query.all()
 
     if request.method == 'POST':
         product.product_name = request.form['product_name']
@@ -543,19 +549,22 @@ def edit_product(product_id):
         product.expiry_date = datetime.strptime(request.form['expiry_date'], '%Y-%m-%d').date()
         product.price = request.form['price']
         product.consignor_report_id = request.form['consignor_report_id']
-        product.sale_id = request.form['sale_id'] or None
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
         return redirect(url_for('products_list'))
 
     return render_template('products/product_form.html', product=product,
-                           consignor_reports=consignor_reports, sales=sales)
+                           consignor_reports=consignor_reports)
 
 
 @app.route('/delete_product/<int:product_id>', methods=['POST'])
 def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
+
+    if product.sales:
+        flash('Товар нельзя удалить, так как есть связанные с ним продажи.', 'error')
+        return redirect(url_for('products_list'))
     db.session.delete(product)
     db.session.commit()
     flash('Товар успешно удалён!', 'success')

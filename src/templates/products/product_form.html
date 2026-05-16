@@ -49,18 +49,6 @@
             </select>
         {% endif %}
     </div>
-    <div class="form-group">
-        <label for="sale_id">Продажа:</label>
-        <select id="sale_id" name="sale_id" class="form-control">
-            <option value="">Выбрать продажу</option>
-            {% for sale in sales %}
-            <option value="{{ sale.id }}"
-                    {% if product and product.sale_id == sale.id %}selected{% endif %}>
-                {{ sale.sale_date }} {{ sale.status }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if product else "Добавить" }}</button>
     {% if preset_consignor_report %}
         <a href="{{ url_for('consignor_report_detail', consignor_report_id=preset_consignor_report.id) }}" class="btn btn-secondary">Отмена</a>

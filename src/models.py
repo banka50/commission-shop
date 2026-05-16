@@ -50,6 +50,21 @@ class SalesReport(db.Model):
     description = db.Column(db.String(200), nullable=True)  # Описание
 
 
+class Product(db.Model):
+    __tablename__ = 'products'
+
+    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор товара
+    product_name = db.Column(db.String(100), nullable=False)  # Наименование товара
+    description = db.Column(db.String(500), nullable=True)  # Описание товара
+    delivery_date = db.Column(db.Date, nullable=False)  # Дата доставки товара
+    expiry_date = db.Column(db.Date, nullable=False)  # Срок реализации товара
+    price = db.Column(db.Numeric(10, 2), nullable=False)  # Цена товара
+    consignor_report_id = db.Column(db.Integer, db.ForeignKey('consignor_reports.id'), nullable=False)  # Идентификатор акта приёма
+
+    consignor_report = db.relationship('ConsignorReport', back_populates='products')
+    sales = db.relationship('Sale', back_populates='product', lazy=True, order_by='Sale.sale_date')
+
+
 class Sale(db.Model):
     __tablename__ = 'sales'
 
@@ -61,21 +76,6 @@ class Sale(db.Model):
         db.Enum('Оплачено', 'Ожидает', 'Возврат', name='sale_status'),
         nullable=False  # Статус
     )
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)  # Идентификатор товара
 
-    products = db.relationship('Product', back_populates='sale', lazy=True)
-
-
-class Product(db.Model):
-    __tablename__ = 'products'
-
-    id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор товара
-    product_name = db.Column(db.String(100), nullable=False)  # Наименование товара
-    description = db.Column(db.String(500), nullable=True)  # Описание товара
-    delivery_date = db.Column(db.Date, nullable=False)  # Дата доставки товара
-    expiry_date = db.Column(db.Date, nullable=False)  # Срок реализации товара
-    price = db.Column(db.Numeric(10, 2), nullable=False)  # Цена товара
-    consignor_report_id = db.Column(db.Integer, db.ForeignKey('consignor_reports.id'), nullable=False)  # Идентификатор акта приёма
-    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=True)  # Идентификатор продажи
-
-    consignor_report = db.relationship('ConsignorReport', back_populates='products')
-    sale = db.relationship('Sale', back_populates='products')
+    product = db.relationship('Product', back_populates='sales')
