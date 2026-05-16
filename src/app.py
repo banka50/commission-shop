@@ -921,22 +921,23 @@ def dashboard():
     # Продажи по месяцам за последние 12 месяцев
     dialect = db.engine.dialect.name
     if dialect == 'sqlite':
-        month_expr = func.strftime('%Y-%m', Sale.sale_date).label('month')
+        month_expr = func.strftime('%Y-%m', Sale.sale_date)
     else:
-        month_expr = func.date_trunc('month', Sale.sale_date).label('month')
+        month_expr = func.date_trunc('month', Sale.sale_date)
 
     monthly = db.session.query(
-        month_expr,
+        month_expr.label('month'),
         func.sum(Sale.sale_price).label('revenue'),
         func.sum(Sale.commission).label('commission'),
     ).filter(
         Sale.status == 'Оплачено',
         Sale.sale_date >= today - timedelta(days=365),
-    ).group_by('month').order_by('month').all()
+    ).group_by(month_expr).order_by(month_expr).all()
 
     # Продажи по категориям за текущий месяц
+    cat_expr = func.coalesce(Category.name, 'Без категории')
     by_category = db.session.query(
-        func.coalesce(Category.name, 'Без категории').label('cat'),
+        cat_expr.label('cat'),
         func.sum(Sale.sale_price).label('revenue'),
     ).join(Product, Sale.product_id == Product.id
     ).outerjoin(Category, Product.category_id == Category.id
@@ -944,7 +945,7 @@ def dashboard():
         Sale.status == 'Оплачено',
         Sale.sale_date >= month_start,
         Sale.sale_date <= today,
-    ).group_by('cat').order_by(func.sum(Sale.sale_price).desc()).all()
+    ).group_by(cat_expr).order_by(func.sum(Sale.sale_price).desc()).all()
 
     # Товары с истекающим сроком (ближайшие 30 дней)
     expiring = Product.query.filter(
