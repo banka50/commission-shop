@@ -35,12 +35,20 @@
             <td>{{ product.price }} ₽</td>
             <td>{{ consignor_reports[product.consignor_report_id] }}</td>
             <td>
-                {% if product.status == 'На витрине' %}
-                    <span class="badge badge-success">На витрине</span>
-                {% elif product.status == 'Продан' %}
-                    <span class="badge badge-primary">Продан</span>
+                {% if product.sales %}
+                    {% set last_sale = product.sales | last %}
+                    <a href="{{ url_for('sale_detail', sale_id=last_sale.id, back='products_list') }}"
+                       style="text-decoration:none;">
+                        {% if last_sale.status == 'Оплачено' %}
+                            <span class="badge badge-success">Оплачено</span>
+                        {% elif last_sale.status == 'Возврат от покупателя' %}
+                            <span class="badge badge-warning">Возврат от покупателя</span>
+                        {% else %}
+                            <span class="badge badge-secondary">{{ last_sale.status }}</span>
+                        {% endif %}
+                    </a>
                 {% else %}
-                    <span class="badge badge-secondary">Возвращён комитенту</span>
+                    <span class="text-muted">—</span>
                 {% endif %}
             </td>
             <td>
