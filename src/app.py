@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from werkzeug.utils import secure_filename
 from models import db, Consignor, ConsignorReport, ConsignorReturn, SalesReport, SalesReportLine, Sale, Product, ProductImage, Category
 from config import Config
@@ -676,6 +676,49 @@ def delete_category(category_id):
 # ==============================
 #           ТОВАР
 # ==============================
+
+
+@app.route('/api/product/<int:product_id>', methods=['PATCH'])
+def api_patch_product(product_id):
+    """Inline-редактирование полей товара (price, category_id)."""
+    product = Product.query.get_or_404(product_id)
+    data = request.get_json(force=True)
+    field = data.get('field')
+    value = data.get('value')
+
+    allowed_fields = {'price', 'category_id'}
+    if field not in allowed_fields:
+        return jsonify(error='Поле не допустимо для редактирования.'), 400
+
+    if field == 'price':
+        try:
+            price = Decimal(str(value))
+            if price <= 0:
+                return jsonify(error='Цена должна быть больше нуля.'), 400
+        except Exception:
+            return jsonify(error='Некорректное значение цены.'), 400
+        product.price = price
+
+    elif field == 'category_id':
+        if value == '' or value is None:
+            product.category_id = None
+        else:
+            cat = Category.query.get(int(value))
+            if not cat:
+                return jsonify(error='Категория не найдена.'), 404
+            product.category_id = cat.id
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify(error='Ошибка при сохранении.'), 500
+
+    return jsonify(
+        ok=True,
+        display_price=str(product.price),
+        display_category=product.category.name if product.category else 'Без категории',
+    )
 
 
 @app.route('/products')

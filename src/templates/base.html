@@ -39,6 +39,22 @@
             font-size: 1.1rem;
             margin-bottom: 20px;
         }
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+        }
+        .editable-cell:hover {
+            background-color: #fff9e6 !important;
+        }
+        .editable-cell:hover::after {
+            content: '\f303';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            font-size: .7rem;
+            color: #aaa;
+            margin-left: 4px;
+            white-space: nowrap;
+        }
 
         @media print {
             /* Скрыть навигацию, кнопки, DataTables controls */
