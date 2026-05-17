@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}{{ "Акт возврата № " + ret.number if ret else "Новый акт возврата" }} — Комиссионный магазин{% endblock %}
 
 {% block content %}
 <h1>{{ "Акт возврата № " + ret.number if ret else "Новый акт возврата" }}</h1>

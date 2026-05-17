@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}{{ "Редактирование акта приёма" if consignor_report else "Добавление акта приёма" }} — Комиссионный магазин{% endblock %}
 
 {% block content %}
 <h1>{{ "Редактирование акта приёма" if consignor_report else "Добавление акта приёма" }}</h1>

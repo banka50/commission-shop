@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}{{ "Редактирование товара" if product else "Добавление товара" }} — Комиссионный магазин{% endblock %}
 
 {% block content %}
 <h1>{{ "Редактирование товара" if product else "Добавление товара" }}</h1>
