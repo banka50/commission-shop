@@ -8,6 +8,9 @@
         <button onclick="window.print()" class="btn btn-outline-secondary">
             <i class="fas fa-print"></i> Печать
         </button>
+        <a href="{{ url_for('export_sales_report_csv', sales_report_id=report.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-download"></i> CSV
+        </a>
         <a href="{{ url_for('edit_sales_report', sales_report_id=report.id) }}" class="btn btn-warning">
             <i class="fas fa-edit"></i> Редактировать
         </a>

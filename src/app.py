@@ -3,13 +3,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, Response
 from werkzeug.utils import secure_filename
 from models import db, Consignor, ConsignorReport, ConsignorReturn, SalesReport, SalesReportLine, Sale, Product, ProductImage, Category
 from config import Config
 
 from datetime import datetime
 from decimal import Decimal
+import io, csv
 from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
@@ -491,6 +492,67 @@ def delete_sales_report(sales_report_id):
     return redirect(url_for('sales_reports_list'))
 
 
+@app.route('/sales_report/<int:sales_report_id>/export.csv')
+def export_sales_report_csv(sales_report_id):
+    report = SalesReport.query.get_or_404(sales_report_id)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Дата', 'Товар', 'Категория', 'Комитент', 'Цена продажи', 'Комиссия', 'К выплате'])
+    for line in report.lines:
+        writer.writerow([
+            line.sale_date,
+            line.product_name,
+            line.category_name or '',
+            line.consignor_name,
+            line.sale_price,
+            line.commission,
+            line.payable,
+        ])
+    writer.writerow([])
+    writer.writerow(['', '', '', 'Итого:', report.total_revenue, report.total_commission, report.total_payable])
+    filename = f'report_{report.number.replace("/", "-")}.csv'
+    return Response(
+        '\ufeff' + output.getvalue(),
+        mimetype='text/csv; charset=utf-8',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'},
+    )
+
+
+@app.route('/products/export.csv')
+def export_products_csv():
+    status_filter = request.args.get('status')
+    query = Product.query
+    if status_filter:
+        query = query.filter(Product.status == status_filter)
+    products = query.order_by(Product.delivery_date.desc()).all()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['ID', 'Название', 'Категория', 'Статус', 'Цена', 'Дата доставки', 'Срок реализации', 'Комитент', 'Акт приёма'])
+    for p in products:
+        consignor = ''
+        report_num = ''
+        if p.consignor_report:
+            report_num = p.consignor_report.number
+            c = p.consignor_report.consignor
+            consignor = f'{c.last_name} {c.first_name} {c.middle_name or ""}'.strip()
+        writer.writerow([
+            p.id,
+            p.product_name,
+            p.category.name if p.category else '',
+            p.status,
+            p.price,
+            p.delivery_date,
+            p.expiry_date,
+            consignor,
+            report_num,
+        ])
+    return Response(
+        '\ufeff' + output.getvalue(),
+        mimetype='text/csv; charset=utf-8',
+        headers={'Content-Disposition': 'attachment; filename="products.csv"'},
+    )
+
+
 # ==============================
 #           ПРОДАЖА
 # ==============================
@@ -842,10 +904,28 @@ def add_product():
 
 @app.route('/products/<product_id>')
 def product_detail(product_id):
+    from datetime import date
     product = Product.query.get_or_404(product_id)
 
-    return render_template('products/product_detail.html', product=product,
-                           consignor_report=product.consignor_report)
+    today = date.today()
+    days_left = (product.expiry_date - today).days if product.expiry_date else None
+
+    paid_sales = [s for s in product.sales if s.status == 'Оплачено']
+    total_revenue = sum(s.sale_price for s in paid_sales)
+    total_commission = sum(s.commission for s in paid_sales)
+    total_payable = total_revenue - total_commission
+
+    return render_template(
+        'products/product_detail.html',
+        product=product,
+        consignor_report=product.consignor_report,
+        today=today,
+        days_left=days_left,
+        paid_sales_count=len(paid_sales),
+        total_revenue=total_revenue,
+        total_commission=total_commission,
+        total_payable=total_payable,
+    )
 
 
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])

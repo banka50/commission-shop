@@ -3,81 +3,199 @@
 {% block title %}{{ product.product_name }} — Комиссионный магазин{% endblock %}
 
 {% block content %}
-<h1>{{ product.product_name }}</h1>
-
-<div class="row">
-    <div class="col-md-8">
-        <p><strong>Описание:</strong> {{ product.description }}</p>
-        <p><strong>Дата доставки:</strong> {{ product.delivery_date }}</p>
-        <p><strong>Срок реализации:</strong> {{ product.expiry_date }}</p>
-        <p><strong>Цена:</strong> {{ product.price }} ₽</p>
-<p><strong>Статус:</strong> {{ product_status_badge(product.status) }}</p>
-
-        {% if consignor_report %}
-        <p>
-            <strong>Акт приёма:</strong>
-            <a href="{{ url_for('consignor_report_detail', consignor_report_id=product.consignor_report_id, back='product', product_id=product.id) }}">
-                {{ consignor_report.number }}
-            </a>
-        </p>
-        {% endif %}
-        {% if product.consignor_return %}
-        <p>
-            <strong>Акт возврата:</strong>
-            <a href="{{ url_for('consignor_return_detail', return_id=product.consignor_return_id, back='product', product_id=product.id) }}">
-                {{ product.consignor_return.number }}
-            </a>
-        </p>
-        {% endif %}
-    </div>
-</div>
-
-<h4 class="mt-4">Фотографии</h4>
-
-{% if product.images %}
-<div class="d-flex flex-wrap mb-3" style="gap: 10px;">
-    {% for img in product.images %}
-    <div class="text-center">
-        <a href="{{ url_for('static', filename='uploads/' + img.filename) }}" target="_blank">
-            <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
-                 alt="{{ product.product_name }}"
-                 style="height: 160px; width: 160px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6;">
+<div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+    <h1 class="mb-0">{{ product.product_name }}</h1>
+    <div class="mt-2">
+        {% if product.status == 'На витрине' %}
+        <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Оформить продажу
         </a>
-        <button class="btn btn-danger btn-sm btn-delete-modal"
-                data-action="{{ url_for('delete_product_image', image_id=img.id) }}"
-                data-message="Удалить это фото? Действие необратимо."
-                data-back="detail"
-                style="margin-top: 4px; width: 160px;">
-            <i class="fas fa-trash-alt"></i> Удалить
-        </button>
+        {% elif product.status == 'Продан' %}
+        <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-outline-warning">
+            <i class="fas fa-undo"></i> Возврат от покупателя
+        </a>
+        {% endif %}
+        <a href="{{ url_for('edit_product', product_id=product.id, back='detail') }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Редактировать
+        </a>
+        {% if request.args.get('back') == 'consignor' and request.args.get('consignor_id') %}
+        <a href="{{ url_for('consignor_detail', consignor_id=request.args.get('consignor_id')) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> К комитенту
+        </a>
+        {% elif request.args.get('back') == 'consignor_report' and request.args.get('report_id') %}
+        <a href="{{ url_for('consignor_report_detail', consignor_report_id=request.args.get('report_id')) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> К акту приёма
+        </a>
+        {% else %}
+        <a href="{{ url_for('products_list') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> К товарам
+        </a>
+        {% endif %}
     </div>
-    {% endfor %}
 </div>
-{% else %}
-<p class="text-muted">Фотографий нет.</p>
+
+<!-- KPI -->
+{% if paid_sales_count > 0 %}
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-2">
+        <div class="card border-left-info shadow-sm py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Продаж (оплачено)</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ paid_sales_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-2">
+        <div class="card border-left-success shadow-sm py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Выручка</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_revenue }} ₽</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-2">
+        <div class="card border-left-danger shadow-sm py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Комиссия магазина</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_commission }} ₽</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-2">
+        <div class="card border-left-primary shadow-sm py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">К выплате</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_payable }} ₽</div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endif %}
 
-<form action="{{ url_for('upload_product_images', product_id=product.id) }}" method="POST"
-      enctype="multipart/form-data" class="mb-4">
-    <div class="input-group" style="max-width: 500px;">
-        <div class="custom-file">
-            <input type="file" id="images" name="images" class="custom-file-input"
-                   accept=".jpg,.jpeg,.png,.webp,.gif" multiple>
-            <label class="custom-file-label" for="images" data-browse="Обзор">Файлы не выбраны</label>
-        </div>
-        <div class="input-group-append">
-            <button type="submit" class="btn btn-outline-secondary">
-                <i class="fas fa-upload"></i> Загрузить
-            </button>
+<div class="row">
+    <!-- Основная информация -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header font-weight-bold">
+                <i class="fas fa-box mr-1"></i> Информация о товаре
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Статус:</strong> {{ product_status_badge(product.status) }}</p>
+                <p class="mb-2"><strong>Цена:</strong> {{ product.price }} ₽</p>
+                {% if product.category %}
+                <p class="mb-2"><strong>Категория:</strong>
+                    <a href="{{ url_for('category_detail', category_id=product.category_id) }}">
+                        {{ product.category.name }}
+                    </a>
+                </p>
+                {% endif %}
+                {% if product.description %}
+                <p class="mb-2"><strong>Описание:</strong> {{ product.description }}</p>
+                {% endif %}
+                <p class="mb-2"><strong>Дата доставки:</strong> {{ product.delivery_date }}</p>
+                <p class="mb-2">
+                    <strong>Срок реализации:</strong>
+                    {% if product.status == 'На витрине' %}
+                        {% if days_left < 0 %}
+                        <span class="text-danger font-weight-bold">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Истёк {{ (-days_left) }} дн. назад ({{ product.expiry_date }})
+                        </span>
+                        {% elif days_left <= 7 %}
+                        <span class="text-warning font-weight-bold">
+                            <i class="fas fa-clock"></i>
+                            Истекает через {{ days_left }} дн. ({{ product.expiry_date }})
+                        </span>
+                        {% else %}
+                        {{ product.expiry_date }} <span class="text-muted">(через {{ days_left }} дн.)</span>
+                        {% endif %}
+                    {% else %}
+                    {{ product.expiry_date }}
+                    {% endif %}
+                </p>
+                {% if consignor_report %}
+                <hr>
+                <p class="mb-1"><strong>Акт приёма:</strong>
+                    <a href="{{ url_for('consignor_report_detail', consignor_report_id=product.consignor_report_id, back='product', product_id=product.id) }}">
+                        {{ consignor_report.number }}
+                    </a>
+                </p>
+                {% set consignor = consignor_report.consignor %}
+                <p class="mb-0"><strong>Комитент:</strong>
+                    <a href="{{ url_for('consignor_detail', consignor_id=consignor.id) }}">
+                        {{ consignor.last_name }} {{ consignor.first_name }} {{ consignor.middle_name or '' }}
+                    </a>
+                </p>
+                {% endif %}
+                {% if product.consignor_return %}
+                <p class="mb-0 mt-2"><strong>Акт возврата:</strong>
+                    <a href="{{ url_for('consignor_return_detail', return_id=product.consignor_return_id, back='product', product_id=product.id) }}">
+                        {{ product.consignor_return.number }}
+                    </a>
+                </p>
+                {% endif %}
+            </div>
         </div>
     </div>
-    <small class="text-muted">Форматы: jpg, jpeg, png, webp, gif. Можно выбрать несколько файлов.</small>
-</form>
 
-<h4 class="mt-4">История продаж</h4>
+    <!-- Фотографии -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header font-weight-bold">
+                <i class="fas fa-images mr-1"></i> Фотографии
+            </div>
+            <div class="card-body">
+                {% if product.images %}
+                <div class="d-flex flex-wrap mb-3" style="gap: 8px;">
+                    {% for img in product.images %}
+                    <div class="text-center">
+                        <a href="{{ url_for('static', filename='uploads/' + img.filename) }}" target="_blank">
+                            <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
+                                 alt="{{ product.product_name }}"
+                                 style="height: 120px; width: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; transition: opacity .15s;"
+                                 onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+                        </a>
+                        <br>
+                        <button class="btn btn-danger btn-sm btn-delete-modal mt-1"
+                                data-action="{{ url_for('delete_product_image', image_id=img.id) }}"
+                                data-message="Удалить это фото? Действие необратимо."
+                                data-back="detail"
+                                style="width: 120px; font-size: .75rem;">
+                            <i class="fas fa-trash-alt"></i> Удалить
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Фотографий нет.</p>
+                {% endif %}
+
+                <form action="{{ url_for('upload_product_images', product_id=product.id) }}" method="POST"
+                      enctype="multipart/form-data">
+                    <div class="input-group">
+                        <div class="custom-file">
+                            <input type="file" id="images" name="images" class="custom-file-input"
+                                   accept=".jpg,.jpeg,.png,.webp,.gif" multiple>
+                            <label class="custom-file-label" for="images" data-browse="Обзор">Файлы не выбраны</label>
+                        </div>
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-outline-secondary">
+                                <i class="fas fa-upload"></i> Загрузить
+                            </button>
+                        </div>
+                    </div>
+                    <small class="text-muted">jpg, jpeg, png, webp, gif — можно выбрать несколько</small>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- История продаж -->
+<h4 class="mt-2">История продаж</h4>
 {% if product.sales %}
 <table class="table table-sm no-datatable">
-    <thead>
+    <thead class="thead-light">
         <tr>
             <th>Дата</th>
             <th>Цена продажи</th>
@@ -92,12 +210,13 @@
         <tr class="clickable-row{% if sale.id == last_sale.id %} table-active font-weight-bold{% endif %}"
             data-href="{{ url_for('sale_detail', sale_id=sale.id, back='product') }}"
             style="cursor: pointer;">
-            <td>{{ sale.sale_date }}</td>
-            <td>{{ sale.sale_price }} ₽</td>
-            <td>{{ sale.commission }} ₽</td>
+            <td>{{ sale.sale_date.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td class="{{ 'text-danger' if sale.sale_price < 0 else '' }}">{{ sale.sale_price }} ₽</td>
+            <td class="{{ 'text-danger' if sale.commission < 0 else '' }}">{{ sale.commission }} ₽</td>
             <td>{{ sale_status_badge(sale.status) }}</td>
             <td>
-                <a href="{{ url_for('sale_detail', sale_id=sale.id, back='product') }}" class="btn btn-primary btn-sm">
+                <a href="{{ url_for('sale_detail', sale_id=sale.id, back='product') }}"
+                   class="btn btn-primary btn-sm" onclick="event.stopPropagation();">
                     <i class="fas fa-eye"></i>
                 </a>
             </td>
@@ -108,34 +227,6 @@
 {% else %}
 <p class="text-muted">Продаж ещё не было.</p>
 {% endif %}
-
-<div class="mt-3">
-    {% if product.status == 'На витрине' %}
-    <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-success">
-        <i class="fas fa-plus"></i> Оформить продажу
-    </a>
-    {% elif product.status == 'Продан' %}
-    <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-outline-warning">
-        <i class="fas fa-undo"></i> Оформить возврат от покупателя
-    </a>
-    {% endif %}
-    <a href="{{ url_for('edit_product', product_id=product.id, back='detail') }}" class="btn btn-warning">
-        <i class="fas fa-edit"></i> Редактировать
-    </a>
-    {% if request.args.get('back') == 'consignor' and request.args.get('consignor_id') %}
-    <a href="{{ url_for('consignor_detail', consignor_id=request.args.get('consignor_id')) }}" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Назад к комитенту
-    </a>
-    {% elif request.args.get('back') == 'consignor_report' and request.args.get('report_id') %}
-    <a href="{{ url_for('consignor_report_detail', consignor_report_id=request.args.get('report_id')) }}" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Назад к акту приёма
-    </a>
-    {% else %}
-    <a href="{{ url_for('products_list') }}" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Назад к товарам
-    </a>
-    {% endif %}
-</div>
 
 {% block scripts %}
 <script>
