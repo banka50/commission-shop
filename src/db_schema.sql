@@ -79,7 +79,7 @@ CREATE TABLE product_images (
 -- отрицательные (сторно) для возвратов от покупателя.
 CREATE TABLE sales (
     id          SERIAL PRIMARY KEY,
-    sale_date   DATE           NOT NULL,
+    sale_date   TIMESTAMP      NOT NULL,
     sale_price  NUMERIC(10,2)  NOT NULL,
     commission  NUMERIC(10,2)  NOT NULL,
     status      sale_status    NOT NULL,
@@ -105,7 +105,7 @@ CREATE TABLE sales_report_lines (
     report_id       INTEGER        NOT NULL REFERENCES sales_reports(id) ON DELETE CASCADE,
     sale_id         INTEGER        REFERENCES sales(id),  -- может быть NULL если продажа удалена
     -- snapshot данных на момент формирования
-    sale_date       DATE           NOT NULL,
+    sale_date       TIMESTAMP      NOT NULL,
     product_name    VARCHAR(100)   NOT NULL,
     category_name   VARCHAR(100),
     consignor_name  VARCHAR(150)   NOT NULL,

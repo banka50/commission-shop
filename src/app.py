@@ -255,8 +255,8 @@ def add_sales_report():
         # Продажи и возвраты за период (возвраты хранятся с отрицательными суммами)
         sales = Sale.query.join(Product).filter(
             Sale.status.in_(['Оплачено', 'Возврат от покупателя']),
-            Sale.sale_date >= date_from,
-            Sale.sale_date <= date_to,
+            Sale.sale_date >= datetime.combine(date_from, datetime.min.time()),
+            Sale.sale_date <= datetime.combine(date_to, datetime.max.time()),
         ).all()
 
         total_revenue = sum(s.sale_price for s in sales)
@@ -374,7 +374,7 @@ def add_sale():
         )
 
     if request.method == 'POST':
-        sale_date = datetime.strptime(request.form['sale_date'], '%Y-%m-%d').date()
+        sale_date = datetime.strptime(request.form['sale_date'], '%Y-%m-%dT%H:%M:%S')
         sale_price = Decimal(request.form['sale_price'])
         commission = Decimal(request.form['commission'])
         status = request.form['status']
@@ -415,7 +415,8 @@ def add_sale():
 
     return render_template('sales/sale_form.html', sale=None,
                            products=products, preset_product=preset_product,
-                           last_paid_sale=last_paid_sale)
+                           last_paid_sale=last_paid_sale,
+                           now=datetime.now())
 
 
 @app.route('/sale/<int:sale_id>')
@@ -431,7 +432,7 @@ def edit_sale(sale_id):
     products = Product.query.all()
 
     if request.method == 'POST':
-        sale.sale_date = datetime.strptime(request.form['sale_date'], '%Y-%m-%d').date()
+        sale.sale_date = datetime.strptime(request.form['sale_date'], '%Y-%m-%dT%H:%M:%S')
         sale.sale_price = Decimal(request.form['sale_price'])
         sale.commission = Decimal(request.form['commission'])
         sale.status = request.form['status']
@@ -789,8 +790,8 @@ def dashboard():
             func.coalesce(func.sum(Sale.commission), 0),
         ).filter(
             Sale.status.in_(['Оплачено', 'Возврат от покупателя']),
-            Sale.sale_date >= date_from,
-            Sale.sale_date <= date_to,
+            Sale.sale_date >= datetime.combine(date_from, datetime.min.time()),
+            Sale.sale_date <= datetime.combine(date_to, datetime.max.time()),
         ).one()
         return {'count': rows[0], 'revenue': rows[1], 'commission': rows[2],
                 'payable': rows[1] - rows[2]}
@@ -817,7 +818,7 @@ def dashboard():
         func.sum(Sale.commission).label('commission'),
     ).filter(
         Sale.status.in_(['Оплачено', 'Возврат от покупателя']),
-        Sale.sale_date >= today - timedelta(days=365),
+        Sale.sale_date >= datetime.combine(today - timedelta(days=365), datetime.min.time()),
     ).group_by(month_expr).order_by(month_expr).all()
 
     # Продажи по категориям за текущий месяц
@@ -829,8 +830,8 @@ def dashboard():
     ).outerjoin(Category, Product.category_id == Category.id
     ).filter(
         Sale.status.in_(['Оплачено', 'Возврат от покупателя']),
-        Sale.sale_date >= month_start,
-        Sale.sale_date <= today,
+        Sale.sale_date >= datetime.combine(month_start, datetime.min.time()),
+        Sale.sale_date <= datetime.combine(today, datetime.max.time()),
     ).group_by(cat_expr).order_by(func.sum(Sale.sale_price).desc()).all()
 
     # Товары с истекающим сроком (ближайшие 30 дней)

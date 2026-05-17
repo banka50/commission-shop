@@ -7,6 +7,11 @@ def _d(s: str) -> date:
     return datetime.strptime(s, '%Y-%m-%d').date()
 
 
+def _dt(s: str) -> datetime:
+    """Парсит дату (YYYY-MM-DD) как полночь для колонок DateTime."""
+    return datetime.strptime(s, '%Y-%m-%d')
+
+
 CONSIGNORS = [
     {'last_name': 'Соколов',    'first_name': 'Иван',      'middle_name': 'Алексеевич',
      'email': 'ivan.sokolov@example.com',        'phone_number': '79001234567',
@@ -308,7 +313,7 @@ def insert_test_data():
 
     for d in SALES:
         db.session.add(Sale(
-            sale_date=_d(d['sale_date']),
+            sale_date=_dt(d['sale_date']),
             sale_price=d['sale_price'],
             commission=d['commission'],
             status=d['status'],

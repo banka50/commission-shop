@@ -104,7 +104,7 @@ class Sale(db.Model):
     __tablename__ = 'sales'
 
     id = db.Column(db.Integer, primary_key=True)  # Уникальный идентификатор продажи
-    sale_date = db.Column(db.Date, nullable=False)  # Дата продажи
+    sale_date = db.Column(db.DateTime, nullable=False)  # Дата и время продажи
     sale_price = db.Column(db.Numeric(10, 2), nullable=False)  # Цена продажи
     commission = db.Column(db.Numeric(10, 2), nullable=False)  # Сумма комиссии
     status = db.Column(
@@ -145,7 +145,7 @@ class SalesReportLine(db.Model):
     sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=True)  # Ссылка на продажу (может быть удалена)
 
     # Snapshot полей на момент формирования отчёта
-    sale_date = db.Column(db.Date, nullable=False)  # Дата продажи
+    sale_date = db.Column(db.DateTime, nullable=False)  # Дата и время продажи (snapshot)
     product_name = db.Column(db.String(100), nullable=False)  # Наименование товара
     category_name = db.Column(db.String(100), nullable=True)  # Категория
     consignor_name = db.Column(db.String(150), nullable=False)  # ФИО комитента

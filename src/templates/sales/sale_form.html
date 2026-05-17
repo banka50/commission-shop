@@ -24,9 +24,9 @@
         {% endif %}
     </div>
     <div class="form-group">
-        <label for="sale_date">Дата:</label>
-        <input type="date" id="sale_date" name="sale_date" class="form-control" required
-               value="{{ sale.sale_date if sale else '' }}">
+        <label for="sale_date">Дата и время:</label>
+        <input type="datetime-local" step="1" id="sale_date" name="sale_date" class="form-control" required
+               value="{{ sale.sale_date.strftime('%Y-%m-%dT%H:%M:%S') if sale else now.strftime('%Y-%m-%dT%H:%M:%S') }}">
     </div>
     <div class="form-group">
         <label for="status">Статус:</label>
