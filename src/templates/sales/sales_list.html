@@ -260,8 +260,12 @@ $('.period-btn').on('click', function() {
         to   = isoDate(new Date(now.getFullYear(), now.getMonth(), 0));
     }
     // 'all' — from/to остаются пустыми
-    document.getElementById('date-from').value = from;
-    document.getElementById('date-to').value   = to;
+    const fpFrom = document.getElementById('date-from')._flatpickr;
+    const fpTo   = document.getElementById('date-to')._flatpickr;
+    if (fpFrom) fpFrom.setDate(from || null, false);
+    else document.getElementById('date-from').value = from;
+    if (fpTo)   fpTo.setDate(to   || null, false);
+    else document.getElementById('date-to').value   = to;
     table.draw();
 });
 

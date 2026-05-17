@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <style>
         /* Левая граница KPI карточек */
         .border-left-primary  { border-left: 4px solid #4e73df !important; }
@@ -216,8 +217,18 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/ru.js"></script>
     <script>
         $(document).ready(function() {
+            // Инициализация date-пикеров (ДД.ММ.ГГГГ, отправляется YYYY-MM-DD)
+            flatpickr('input[type="date"]', {
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd.m.Y',
+                locale: 'ru',
+                allowInput: true,
+            });
             $('table.table:not(.no-datatable):not(#productsTable):not(#salesTable):not(#categoryProductsTable):not(#salesReportsTable):not(#consignorsTable):not(#consignorReturnsTable)').DataTable({
                 stateSave: true,
                 language: {
