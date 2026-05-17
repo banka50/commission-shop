@@ -1367,8 +1367,23 @@ def dashboard():
     cat_labels = [row.cat for row in by_category]
     cat_revenue = [float(row.revenue) for row in by_category]
 
+    def _delta(curr_val, prev_val):
+        """Возвращает dict с процентом изменения или None."""
+        if not prev_val:
+            return None
+        pct = (float(curr_val) - float(prev_val)) / float(prev_val) * 100
+        return {'pct': round(abs(pct), 1), 'positive': pct >= 0}
+
+    deltas = [
+        _delta(curr['revenue'],    prev['revenue']),
+        _delta(curr['commission'], prev['commission']),
+        _delta(curr['count'],      prev['count']),
+        None,
+    ]
+
     return render_template('dashboard.html',
                            curr=curr, prev=prev,
+                           deltas=deltas,
                            product_counts=product_counts,
                            monthly_labels=monthly_labels,
                            monthly_revenue=monthly_revenue,
