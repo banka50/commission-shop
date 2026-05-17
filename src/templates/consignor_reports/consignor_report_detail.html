@@ -41,7 +41,7 @@
         {% for product in consignor_report.products %}
         <tr>
             <td>
-                <a href="{{ url_for('product_detail', product_id=product.id) }}">{{ product.product_name }}</a>
+                <a href="{{ url_for('product_detail', product_id=product.id, back='consignor_report', report_id=consignor_report.id) }}">{{ product.product_name }}</a>
             </td>
             <td>{{ product.price }} ₽</td>
             <td>{{ product.delivery_date }}</td>
@@ -54,8 +54,14 @@
 {% endif %}
 
 <div class="mt-3">
+    {% if request.args.get('back') == 'consignor' and request.args.get('consignor_id') %}
+    <a href="{{ url_for('consignor_detail', consignor_id=request.args.get('consignor_id')) }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к комитенту
+    </a>
+    {% else %}
     <a href="{{ url_for('consignor_reports_list') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к актам приёма
     </a>
+    {% endif %}
 </div>
 {% endblock %}

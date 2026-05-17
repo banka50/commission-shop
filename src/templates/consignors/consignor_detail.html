@@ -1,16 +1,221 @@
 {% extends "base.html" %}
+{% from "macros.html" import product_status_badge %}
 {% block title %}{{ consignor.last_name }} {{ consignor.first_name }} — Комиссионный магазин{% endblock %}
 
 {% block content %}
-<h1>Комитент</h1>
-<p><strong>Фамилия:</strong> {{ consignor.last_name }}</p>
-<p><strong>Имя:</strong> {{ consignor.first_name }}</p>
-<p><strong>Отчество:</strong> {{ consignor.middle_name }}</p>
-<p><strong>Почта:</strong> {{ consignor.email }}</p>
-<p><strong>Номер телефона:</strong> {{ consignor.phone_number }}</p>
-<p><strong>Паспортные данные:</strong> {{ consignor.passport_data }}</p>
-<p><strong>ИНН:</strong> {{ consignor.inn }}</p>
-<div class="mt-3">
+<h1>{{ consignor.last_name }} {{ consignor.first_name }} {{ consignor.middle_name or '' }}</h1>
+
+<!-- KPI -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-left-warning shadow-sm h-100 py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">На витрине</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ on_display | length }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-left-success shadow-sm h-100 py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Выручка (оплачено)</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_revenue }} ₽</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-left-primary shadow-sm h-100 py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">К выплате</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_payable }} ₽</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-left-info shadow-sm h-100 py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Актов приёма</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ consignor.consignor_reports | length }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Контактные данные -->
+    <div class="col-md-5 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header font-weight-bold">
+                <i class="fas fa-user mr-1"></i> Контактные данные
+            </div>
+            <div class="card-body">
+                <p class="mb-2">
+                    <i class="fas fa-phone fa-fw text-muted mr-1"></i>
+                    <a href="tel:{{ consignor.phone_number }}">{{ consignor.phone_number }}</a>
+                </p>
+                <p class="mb-2">
+                    <i class="fas fa-envelope fa-fw text-muted mr-1"></i>
+                    <a href="mailto:{{ consignor.email }}">{{ consignor.email }}</a>
+                </p>
+                <hr>
+                <!-- Чувствительные данные скрыты -->
+                <button class="btn btn-sm btn-outline-secondary mb-2" type="button"
+                        data-toggle="collapse" data-target="#sensitiveData">
+                    <i class="fas fa-eye"></i> Показать паспорт и ИНН
+                </button>
+                <div class="collapse" id="sensitiveData">
+                    <p class="mb-1"><strong>Паспортные данные:</strong><br>
+                        <span class="text-monospace">{{ consignor.passport_data }}</span>
+                    </p>
+                    <p class="mb-0"><strong>ИНН:</strong><br>
+                        <span class="text-monospace">{{ consignor.inn }}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="col-md-7 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header font-weight-bold">
+                <i class="fas fa-chart-bar mr-1"></i> Статистика товаров
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="h4 font-weight-bold text-warning">{{ on_display | length }}</div>
+                        <div class="small text-muted">На витрине</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 font-weight-bold text-primary">{{ sold | length }}</div>
+                        <div class="small text-muted">Продано</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 font-weight-bold text-secondary">{{ returned | length }}</div>
+                        <div class="small text-muted">Возвращено</div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="h5 font-weight-bold text-success">{{ total_revenue }} ₽</div>
+                        <div class="small text-muted">Выручка</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="h5 font-weight-bold text-danger">{{ total_commission }} ₽</div>
+                        <div class="small text-muted">Комиссия магазина</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Акты приёма -->
+{% if consignor.consignor_reports %}
+<div class="card shadow mb-4">
+    <div class="card-header font-weight-bold">
+        <i class="fas fa-file-import mr-1"></i> Акты приёма
+        <span class="badge badge-secondary ml-1">{{ consignor.consignor_reports | length }}</span>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 no-datatable">
+            <thead class="thead-light">
+                <tr>
+                    <th>Номер</th>
+                    <th>Дата</th>
+                    <th>Товаров</th>
+                    <th>Комиссия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cr in consignor.consignor_reports | sort(attribute='date', reverse=True) %}
+                <tr class="clickable-row"
+                    data-href="{{ url_for('consignor_report_detail', consignor_report_id=cr.id, back='consignor', consignor_id=consignor.id) }}"
+                    style="cursor:pointer;">
+                    <td>{{ cr.number }}</td>
+                    <td>{{ cr.date }}</td>
+                    <td>{{ cr.products | length }}</td>
+                    <td>{{ cr.commission_pct }}% (мин. {{ cr.commission_min }} ₽)</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Товары на витрине -->
+{% if on_display %}
+<div class="card shadow mb-4">
+    <div class="card-header font-weight-bold text-warning">
+        <i class="fas fa-tag mr-1"></i> Товары на витрине
+        <span class="badge badge-warning ml-1">{{ on_display | length }}</span>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 no-datatable">
+            <thead class="thead-light">
+                <tr>
+                    <th>Наименование</th>
+                    <th>Цена</th>
+                    <th>Срок реализации</th>
+                    <th>Акт приёма</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in on_display | sort(attribute='expiry_date') %}
+                <tr class="clickable-row"
+                    data-href="{{ url_for('product_detail', product_id=p.id, back='consignor', consignor_id=consignor.id) }}"
+                    style="cursor:pointer;">
+                    <td>{{ p.product_name }}</td>
+                    <td>{{ p.price }} ₽</td>
+                    <td>{{ p.expiry_date }}</td>
+                    <td>{{ p.consignor_report.number }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Акты возврата -->
+{% if consignor.consignor_returns %}
+<div class="card shadow mb-4">
+    <div class="card-header font-weight-bold">
+        <i class="fas fa-undo mr-1"></i> Акты возврата
+        <span class="badge badge-secondary ml-1">{{ consignor.consignor_returns | length }}</span>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 no-datatable">
+            <thead class="thead-light">
+                <tr>
+                    <th>Номер</th>
+                    <th>Дата</th>
+                    <th>Товаров</th>
+                    <th>Описание</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ret in consignor.consignor_returns | sort(attribute='date', reverse=True) %}
+                <tr class="clickable-row"
+                    data-href="{{ url_for('consignor_return_detail', return_id=ret.id, back='consignor', consignor_id=consignor.id) }}"
+                    style="cursor:pointer;">
+                    <td>{{ ret.number }}</td>
+                    <td>{{ ret.date }}</td>
+                    <td>{{ ret.products | length }}</td>
+                    <td>{{ ret.description or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Кнопки -->
+<div class="mt-2">
     {% if request.args.get('back') == 'return' and request.args.get('return_id') %}
     <a href="{{ url_for('consignor_return_detail', return_id=request.args.get('return_id')) }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к акту возврата
@@ -24,5 +229,8 @@
         <i class="fas fa-arrow-left"></i> Назад к комитентам
     </a>
     {% endif %}
+    <a href="{{ url_for('edit_consignor', consignor_id=consignor.id, back='detail') }}" class="btn btn-warning">
+        <i class="fas fa-edit"></i> Редактировать
+    </a>
 </div>
 {% endblock %}

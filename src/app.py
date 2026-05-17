@@ -217,7 +217,28 @@ def add_consignor():
 def consignor_detail(consignor_id):
     consignor = Consignor.query.get_or_404(consignor_id)
 
-    return render_template('consignors/consignor_detail.html', consignor=consignor)
+    all_products = [p for cr in consignor.consignor_reports for p in cr.products]
+    on_display = [p for p in all_products if p.status == 'На витрине']
+    sold = [p for p in all_products if p.status == 'Продан']
+    returned = [p for p in all_products if p.status == 'Возвращён комитенту']
+
+    paid_sales = [
+        s for p in all_products for s in p.sales if s.status == 'Оплачено'
+    ]
+    total_revenue = sum(s.sale_price for s in paid_sales)
+    total_commission = sum(s.commission for s in paid_sales)
+    total_payable = total_revenue - total_commission
+
+    return render_template(
+        'consignors/consignor_detail.html',
+        consignor=consignor,
+        on_display=on_display,
+        sold=sold,
+        returned=returned,
+        total_revenue=total_revenue,
+        total_commission=total_commission,
+        total_payable=total_payable,
+    )
 
 
 @app.route('/edit_consignor/<int:consignor_id>', methods=['GET', 'POST'])
@@ -239,6 +260,8 @@ def edit_consignor(consignor_id):
             flash(_unique_error_message(e), 'danger')
             return render_template('consignors/consignor_form.html', consignor=consignor)
         flash('Данные обновлены!', 'success')
+        if request.args.get('back') == 'detail':
+            return redirect(url_for('consignor_detail', consignor_id=consignor_id))
         return redirect(url_for('consignors_list'))
 
     return render_template('consignors/consignor_form.html', consignor=consignor)

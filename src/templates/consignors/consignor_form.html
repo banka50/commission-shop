@@ -41,8 +41,10 @@
                value="{{ consignor.inn if consignor else '' }}">
     </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if consignor else "Добавить" }}</button>
-    <a href="{{ url_for('consignors_list') }}" class="btn btn-secondary">
-        Отмена
-    </a>
+    {% if consignor and request.args.get('back') == 'detail' %}
+    <a href="{{ url_for('consignor_detail', consignor_id=consignor.id) }}" class="btn btn-secondary">Отмена</a>
+    {% else %}
+    <a href="{{ url_for('consignors_list') }}" class="btn btn-secondary">Отмена</a>
+    {% endif %}
 </form>
 {% endblock %}
