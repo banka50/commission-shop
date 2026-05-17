@@ -95,6 +95,21 @@
             </nav>
 
             <div class="container-fluid">
+                {% if breadcrumbs and breadcrumbs | length > 1 %}
+                <nav aria-label="breadcrumb" class="mt-2 no-print">
+                    <ol class="breadcrumb bg-transparent px-0 py-1 mb-0">
+                        {% for crumb in breadcrumbs %}
+                        {% if loop.last %}
+                        <li class="breadcrumb-item active">{{ crumb.label }}</li>
+                        {% else %}
+                        <li class="breadcrumb-item">
+                            <a href="{{ crumb.url }}">{{ crumb.label }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ol>
+                </nav>
+                {% endif %}
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}

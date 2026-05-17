@@ -18,6 +18,97 @@ db.init_app(app)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
+@app.context_processor
+def inject_breadcrumbs():
+    """Автоматически формирует хлебные крошки по текущему endpoint."""
+    from flask import request as _req
+    endpoint = _req.endpoint
+    args = _req.view_args or {}
+    crumbs = [{'label': 'Дашборд', 'url': url_for('dashboard')}]
+
+    section_map = {
+        'consignors_list':         ('Комитенты',           'consignors_list',         {}),
+        'consignor_detail':        ('Комитенты',           'consignors_list',         {}),
+        'add_consignor':           ('Комитенты',           'consignors_list',         {}),
+        'edit_consignor':          ('Комитенты',           'consignors_list',         {}),
+        'categories_list':         ('Категории',           'categories_list',         {}),
+        'add_category':            ('Категории',           'categories_list',         {}),
+        'edit_category':           ('Категории',           'categories_list',         {}),
+        'products_list':           ('Товары',              'products_list',           {}),
+        'product_detail':          ('Товары',              'products_list',           {}),
+        'add_product':             ('Товары',              'products_list',           {}),
+        'edit_product':            ('Товары',              'products_list',           {}),
+        'sales_list':              ('Продажи',             'sales_list',              {}),
+        'sale_detail':             ('Продажи',             'sales_list',              {}),
+        'add_sale':                ('Продажи',             'sales_list',              {}),
+        'edit_sale':               ('Продажи',             'sales_list',              {}),
+        'consignor_reports_list':  ('Акты приёма',         'consignor_reports_list',  {}),
+        'consignor_report_detail': ('Акты приёма',         'consignor_reports_list',  {}),
+        'add_consignor_report':    ('Акты приёма',         'consignor_reports_list',  {}),
+        'edit_consignor_report':   ('Акты приёма',         'consignor_reports_list',  {}),
+        'consignor_returns_list':  ('Акты возврата',       'consignor_returns_list',  {}),
+        'consignor_return_detail': ('Акты возврата',       'consignor_returns_list',  {}),
+        'add_consignor_return':    ('Акты возврата',       'consignor_returns_list',  {}),
+        'edit_consignor_return':   ('Акты возврата',       'consignor_returns_list',  {}),
+        'sales_reports_list':      ('Отчёты по продажам', 'sales_reports_list',      {}),
+        'sales_report_detail':     ('Отчёты по продажам', 'sales_reports_list',      {}),
+        'add_sales_report':        ('Отчёты по продажам', 'sales_reports_list',      {}),
+        'edit_sales_report':       ('Отчёты по продажам', 'sales_reports_list',      {}),
+    }
+
+    if endpoint in section_map:
+        section_label, section_endpoint, section_args = section_map[endpoint]
+        is_section_root = (endpoint == section_endpoint)
+        crumbs.append({
+            'label': section_label,
+            'url': None if is_section_root else url_for(section_endpoint, **section_args),
+        })
+
+        # Третий уровень — название конкретной записи
+        detail_label = None
+        if endpoint == 'consignor_detail':
+            c = Consignor.query.get(args.get('consignor_id'))
+            if c:
+                detail_label = f'{c.last_name} {c.first_name}'
+        elif endpoint in ('add_consignor', 'edit_consignor'):
+            detail_label = 'Редактировать' if 'consignor_id' in args else 'Добавить'
+        elif endpoint == 'product_detail':
+            p = Product.query.get(args.get('product_id'))
+            if p:
+                detail_label = p.product_name
+        elif endpoint in ('add_product', 'edit_product'):
+            detail_label = 'Редактировать' if 'product_id' in args else 'Добавить'
+        elif endpoint == 'sale_detail':
+            detail_label = 'Продажа'
+        elif endpoint in ('add_sale', 'edit_sale'):
+            detail_label = 'Редактировать' if 'sale_id' in args else 'Добавить'
+        elif endpoint in ('add_category', 'edit_category'):
+            detail_label = 'Редактировать' if 'category_id' in args else 'Добавить'
+        elif endpoint == 'consignor_report_detail':
+            cr = ConsignorReport.query.get(args.get('consignor_report_id'))
+            if cr:
+                detail_label = f'Акт № {cr.number}'
+        elif endpoint in ('add_consignor_report', 'edit_consignor_report'):
+            detail_label = 'Редактировать' if 'consignor_report_id' in args else 'Добавить'
+        elif endpoint in ('consignor_return_detail', 'edit_consignor_return'):
+            ret = ConsignorReturn.query.get(args.get('return_id'))
+            if ret:
+                detail_label = f'Акт № {ret.number}'
+        elif endpoint == 'add_consignor_return':
+            detail_label = 'Новый акт'
+        elif endpoint == 'sales_report_detail':
+            sr = SalesReport.query.get(args.get('sales_report_id'))
+            if sr:
+                detail_label = f'Отчёт № {sr.number}'
+        elif endpoint in ('add_sales_report', 'edit_sales_report'):
+            detail_label = 'Редактировать' if 'sales_report_id' in args else 'Сформировать'
+
+        if detail_label:
+            crumbs.append({'label': detail_label, 'url': None})
+
+    return {'breadcrumbs': crumbs}
+
+
 def _allowed_file(filename: str) -> bool:
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
