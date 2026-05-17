@@ -102,6 +102,8 @@
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if product else "Добавить" }}</button>
     {% if preset_consignor_report %}
         <a href="{{ url_for('consignor_report_detail', consignor_report_id=preset_consignor_report.id) }}" class="btn btn-secondary">Отмена</a>
+    {% elif product and request.args.get('back') == 'detail' %}
+        <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-secondary">Отмена</a>
     {% else %}
         <a href="{{ url_for('products_list') }}" class="btn btn-secondary">Отмена</a>
     {% endif %}

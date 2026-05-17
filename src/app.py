@@ -850,6 +850,8 @@ def edit_product(product_id):
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
+        if request.args.get('back') == 'detail':
+            return redirect(url_for('product_detail', product_id=product_id))
         return redirect(url_for('products_list'))
 
     return render_template('products/product_form.html', product=product,
