@@ -72,6 +72,7 @@ def inject_breadcrumbs():
         'sales_report_detail':     ('Отчёты по продажам', 'sales_reports_list',      {}),
         'add_sales_report':        ('Отчёты по продажам', 'sales_reports_list',      {}),
         'edit_sales_report':       ('Отчёты по продажам', 'sales_reports_list',      {}),
+        'search':                  ('Поиск',              'search',                  {}),
     }
 
     if endpoint in section_map:
@@ -1097,6 +1098,72 @@ def dashboard():
                            expiring=expiring,
                            overdue=overdue,
                            today=today)
+
+
+# ==============================
+#        ГЛОБАЛЬНЫЙ ПОИСК
+# ==============================
+
+
+@app.route('/search')
+def search():
+    from sqlalchemy import or_
+    q = request.args.get('q', '').strip()
+    results = {'products': [], 'consignors': [], 'consignor_reports': [], 'consignor_returns': []}
+    total = 0
+
+    if q and len(q) >= 2:
+        # SQLite lower() не поддерживает кириллицу, поэтому ищем как есть.
+        # Для покрытия обоих регистров первой буквы добавляем два варианта.
+        pat = f'%{q}%'
+        pat_cap = f'%{q[0].upper()}{q[1:]}%'
+        pat_low = f'%{q[0].lower()}{q[1:]}%'
+
+        results['products'] = Product.query.filter(
+            or_(
+                Product.product_name.like(pat),
+                Product.product_name.like(pat_cap),
+                Product.product_name.like(pat_low),
+                Product.description.like(pat),
+                Product.description.like(pat_cap),
+                Product.description.like(pat_low),
+            )
+        ).order_by(Product.product_name).limit(30).all()
+
+        results['consignors'] = Consignor.query.filter(
+            or_(
+                Consignor.last_name.like(pat),
+                Consignor.last_name.like(pat_cap),
+                Consignor.last_name.like(pat_low),
+                Consignor.first_name.like(pat),
+                Consignor.first_name.like(pat_cap),
+                Consignor.first_name.like(pat_low),
+                Consignor.middle_name.like(pat),
+                Consignor.phone_number.like(pat),
+            )
+        ).order_by(Consignor.last_name).limit(20).all()
+
+        results['consignor_reports'] = ConsignorReport.query.filter(
+            or_(
+                ConsignorReport.number.like(pat),
+                ConsignorReport.description.like(pat),
+                ConsignorReport.description.like(pat_cap),
+                ConsignorReport.description.like(pat_low),
+            )
+        ).order_by(ConsignorReport.date.desc()).limit(20).all()
+
+        results['consignor_returns'] = ConsignorReturn.query.filter(
+            or_(
+                ConsignorReturn.number.like(pat),
+                ConsignorReturn.description.like(pat),
+                ConsignorReturn.description.like(pat_cap),
+                ConsignorReturn.description.like(pat_low),
+            )
+        ).order_by(ConsignorReturn.date.desc()).limit(20).all()
+
+        total = sum(len(v) for v in results.values())
+
+    return render_template('search_results.html', q=q, results=results, total=total)
 
 
 if __name__ == "__main__":

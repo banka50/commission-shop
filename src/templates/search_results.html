@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% from "macros.html" import product_status_badge %}
+{% block title %}Поиск: {{ q }} — Комиссионный магазин{% endblock %}
+
+{% block content %}
+<h1><i class="fas fa-search mr-2"></i>Поиск</h1>
+
+<form method="GET" action="{{ url_for('search') }}" class="mb-4" style="max-width: 520px;">
+    <div class="input-group">
+        <input type="text" name="q" class="form-control form-control-lg"
+               placeholder="Товар, комитент, номер акта…"
+               value="{{ q }}" autofocus autocomplete="off">
+        <div class="input-group-append">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Найти
+            </button>
+        </div>
+    </div>
+</form>
+
+{% if q %}
+    {% if total == 0 %}
+    <div class="empty-state">
+        <i class="fas fa-search-minus"></i>
+        <p>По запросу <strong>«{{ q }}»</strong> ничего не найдено.</p>
+    </div>
+    {% else %}
+    <p class="text-muted mb-4">Найдено результатов: <strong>{{ total }}</strong> по запросу «{{ q }}»</p>
+
+    {# ── Товары ── #}
+    {% if results.products %}
+    <div class="card shadow mb-4">
+        <div class="card-header font-weight-bold">
+            <i class="fas fa-boxes mr-1"></i> Товары
+            <span class="badge badge-secondary ml-1">{{ results.products | length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Наименование</th>
+                        <th>Статус</th>
+                        <th>Категория</th>
+                        <th>Цена</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in results.products %}
+                    <tr class="clickable-row" data-href="{{ url_for('product_detail', product_id=p.id) }}" style="cursor:pointer;">
+                        <td>{{ p.product_name }}</td>
+                        <td>{{ product_status_badge(p.status) }}</td>
+                        <td>{{ p.category.name if p.category else '—' }}</td>
+                        <td>{{ p.price }} ₽</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Комитенты ── #}
+    {% if results.consignors %}
+    <div class="card shadow mb-4">
+        <div class="card-header font-weight-bold">
+            <i class="fas fa-user-friends mr-1"></i> Комитенты
+            <span class="badge badge-secondary ml-1">{{ results.consignors | length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ФИО</th>
+                        <th>Телефон</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in results.consignors %}
+                    <tr class="clickable-row" data-href="{{ url_for('consignor_detail', consignor_id=c.id) }}" style="cursor:pointer;">
+                        <td>{{ c.last_name }} {{ c.first_name }} {{ c.middle_name or '' }}</td>
+                        <td>{{ c.phone_number }}</td>
+                        <td>{{ c.email }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Акты приёма ── #}
+    {% if results.consignor_reports %}
+    <div class="card shadow mb-4">
+        <div class="card-header font-weight-bold">
+            <i class="fas fa-file-import mr-1"></i> Акты приёма
+            <span class="badge badge-secondary ml-1">{{ results.consignor_reports | length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Номер</th>
+                        <th>Дата</th>
+                        <th>Комитент</th>
+                        <th>Описание</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cr in results.consignor_reports %}
+                    <tr class="clickable-row" data-href="{{ url_for('consignor_report_detail', consignor_report_id=cr.id) }}" style="cursor:pointer;">
+                        <td>{{ cr.number }}</td>
+                        <td>{{ cr.date }}</td>
+                        <td>{{ cr.consignor.last_name }} {{ cr.consignor.first_name }}</td>
+                        <td>{{ cr.description }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Акты возврата ── #}
+    {% if results.consignor_returns %}
+    <div class="card shadow mb-4">
+        <div class="card-header font-weight-bold">
+            <i class="fas fa-undo mr-1"></i> Акты возврата
+            <span class="badge badge-secondary ml-1">{{ results.consignor_returns | length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Номер</th>
+                        <th>Дата</th>
+                        <th>Комитент</th>
+                        <th>Описание</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ret in results.consignor_returns %}
+                    <tr class="clickable-row" data-href="{{ url_for('consignor_return_detail', return_id=ret.id) }}" style="cursor:pointer;">
+                        <td>{{ ret.number }}</td>
+                        <td>{{ ret.date }}</td>
+                        <td>{{ ret.consignor.last_name }} {{ ret.consignor.first_name }}</td>
+                        <td>{{ ret.description or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+{% endif %}
+{% endblock %}
