@@ -25,12 +25,12 @@
                 <div class="form-group col-md-4">
                     <label for="number">Номер акта:</label>
                     <input type="text" id="number" name="number" class="form-control" required
-                           value="{{ ret.number if ret else '' }}">
+                           value="{{ ret.number if ret else (suggested_number or '') }}">
                 </div>
                 <div class="form-group col-md-4">
                     <label for="date">Дата:</label>
                     <input type="date" id="date" name="date" class="form-control" required
-                           value="{{ ret.date if ret else '' }}">
+                           value="{{ ret.date if ret else (suggested_date or '') }}">
                 </div>
                 <div class="form-group col-md-4">
                     <label for="consignor_id">Комитент:</label>
@@ -43,10 +43,13 @@
                         {% endif %}
                     </p>
                     {% else %}
-                    <select id="consignor_id" name="consignor_id" class="form-control" required>
+                    <select id="consignor_id" name="consignor_id" class="form-control select2-consignor" required>
                         <option value="">Выбрать комитента</option>
                         {% for c in consignors %}
-                        <option value="{{ c.id }}">{{ c.last_name }} {{ c.first_name }}</option>
+                        <option value="{{ c.id }}"
+                                {% if preset_consignor_id and c.id == preset_consignor_id %}selected{% endif %}>
+                            {{ c.last_name }} {{ c.first_name }}
+                        </option>
                         {% endfor %}
                     </select>
                     {% endif %}
@@ -122,7 +125,7 @@
         {% if addable %}
         <form action="{{ url_for('add_product_to_return', return_id=ret.id) }}" method="POST"
               class="form-inline">
-            <select name="product_id" class="form-control mr-2 flex-grow-1" required>
+            <select name="product_id" class="form-control mr-2 flex-grow-1 select2-product-return" required>
                 <option value="">— Выбрать товар для добавления —</option>
                 {% for p in addable %}
                 <option value="{{ p.id }}">
@@ -177,4 +180,25 @@
 </div>
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+{% if not ret %}
+<script>
+$('.select2-consignor').select2({
+    theme: 'bootstrap4',
+    placeholder: 'Выбрать комитента',
+    allowClear: true,
+    width: '100%',
+});
+</script>
+{% else %}
+<script>
+$('.select2-product-return').select2({
+    theme: 'bootstrap4',
+    placeholder: '— Выбрать товар для добавления —',
+    width: '100%',
+});
+</script>
+{% endif %}
 {% endblock %}

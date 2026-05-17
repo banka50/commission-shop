@@ -4,27 +4,35 @@
 {% block content %}
 <h1>{{ "Редактирование отчёта" if sales_report else "Новый отчёт по продажам" }}</h1>
 
-<form method="POST">
-    <div class="form-group">
-        <label for="number">Номер отчёта:</label>
-        <input type="text" id="number" name="number" class="form-control" required
-               value="{{ sales_report.number if sales_report else '' }}">
-    </div>
-    <div class="form-group">
-        <label for="date">Дата формирования:</label>
-        <input type="date" id="date" name="date" class="form-control" required
-               value="{{ sales_report.date if sales_report else '' }}">
+<form method="POST" id="salesReportForm">
+    <div class="form-row">
+        <div class="form-group col-md-4">
+            <label for="number">Номер отчёта:</label>
+            <input type="text" id="number" name="number" class="form-control" required
+                   value="{{ sales_report.number if sales_report else (suggested_number or '') }}">
+        </div>
+        <div class="form-group col-md-4">
+            <label for="date">Дата формирования:</label>
+            <input type="date" id="date" name="date" class="form-control" required
+                   value="{{ sales_report.date if sales_report else (suggested_report_date or '') }}">
+        </div>
     </div>
     {% if not sales_report %}
     <div class="form-row">
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-4">
             <label for="date_from">Период с:</label>
-            <input type="date" id="date_from" name="date_from" class="form-control" required>
+            <input type="date" id="date_from" name="date_from" class="form-control" required
+                   value="{{ suggested_date_from or '' }}">
         </div>
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-4">
             <label for="date_to">по:</label>
-            <input type="date" id="date_to" name="date_to" class="form-control" required>
+            <input type="date" id="date_to" name="date_to" class="form-control" required
+                   value="{{ suggested_date_to or '' }}">
         </div>
+    </div>
+    <div class="invalid-feedback" id="date_range_error" style="display:none;">
+        <i class="fas fa-exclamation-triangle mr-1"></i>
+        Дата «по» должна быть не раньше даты «с».
     </div>
     {% else %}
     <p><strong>Период:</strong> {{ sales_report.date_from }} — {{ sales_report.date_to }}</p>
@@ -37,10 +45,31 @@
     {% if not sales_report %}
     <div class="alert alert-info">
         <i class="fas fa-info-circle"></i>
-        В отчёт войдут все продажи со статусом <strong>«Оплачено»</strong> за указанный период.
+        В отчёт войдут все продажи со статусом <strong>«Оплачено»</strong> и <strong>«Возврат от покупателя»</strong> за указанный период.
     </div>
     {% endif %}
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if sales_report else "Сформировать отчёт" }}</button>
     <a href="{{ url_for('sales_reports_list') }}" class="btn btn-secondary">Отмена</a>
 </form>
+{% endblock %}
+
+{% block scripts %}
+{% if not sales_report %}
+<script>
+document.getElementById('salesReportForm').addEventListener('submit', function(e) {
+    const from = document.getElementById('date_from').value;
+    const to   = document.getElementById('date_to').value;
+    const errEl = document.getElementById('date_range_error');
+    if (from && to && to < from) {
+        e.preventDefault();
+        errEl.style.display = 'block';
+        document.getElementById('date_to').classList.add('is-invalid');
+        document.getElementById('date_to').scrollIntoView({behavior: 'smooth', block: 'center'});
+    } else {
+        errEl.style.display = 'none';
+        document.getElementById('date_to').classList.remove('is-invalid');
+    }
+});
+</script>
+{% endif %}
 {% endblock %}

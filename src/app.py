@@ -18,6 +18,23 @@ app.config.from_object(Config)
 db.init_app(app)
 
 
+def _suggest_next_number(prefix: str, model) -> str:
+    """Генерирует следующий номер вида PREFIX-NNN, где NNN — count+1."""
+    count = model.query.count()
+    return f'{prefix}-{count + 1:03d}'
+
+
+def _last_consignor_commission(consignor_id: int) -> dict:
+    """Возвращает ставки комиссии из последнего акта приёма комитента."""
+    last = (ConsignorReport.query
+            .filter_by(consignor_id=consignor_id)
+            .order_by(ConsignorReport.date.desc(), ConsignorReport.id.desc())
+            .first())
+    if last:
+        return {'pct': float(last.commission_pct), 'min': float(last.commission_min)}
+    return {'pct': 20.0, 'min': 0.0}
+
+
 def _unique_error_message(err: IntegrityError) -> str:
     """Возвращает понятное сообщение при нарушении уникальности."""
     msg = str(err.orig).lower()
@@ -303,7 +320,7 @@ def consignor_reports_list():
 
 @app.route('/add_consignor_report', methods=['GET', 'POST'])
 def add_consignor_report():
-    consignors = Consignor.query.all()
+    consignors = Consignor.query.order_by(Consignor.last_name).all()
 
     if request.method == 'POST':
         number = request.form['number']
@@ -328,12 +345,24 @@ def add_consignor_report():
             db.session.rollback()
             flash(_unique_error_message(e), 'danger')
             return render_template('consignor_reports/consignor_report_form.html',
-                                   consignor_report=None, consignors=consignors)
+                                   consignor_report=None, consignors=consignors,
+                                   suggested_number=number,
+                                   suggested_date=request.form['date'])
         flash('Акт приёма успешно добавлен!', 'success')
-        return redirect(url_for('consignor_reports_list'))
+        return redirect(url_for('consignor_report_detail', consignor_report_id=new_report.id))
 
+    suggested_number = _suggest_next_number('АКТ', ConsignorReport)
+    suggested_date = datetime.today().strftime('%Y-%m-%d')
+    # Данные о ставках последних актов для каждого комитента (для JS)
+    commissions = {
+        c.id: _last_consignor_commission(c.id)
+        for c in consignors
+    }
     return render_template('consignor_reports/consignor_report_form.html',
-                           consignor_report=None, consignors=consignors)
+                           consignor_report=None, consignors=consignors,
+                           suggested_number=suggested_number,
+                           suggested_date=suggested_date,
+                           commissions=commissions)
 
 
 @app.route('/consignor_report/<int:consignor_report_id>')
@@ -455,7 +484,23 @@ def add_sales_report():
         flash('Отчёт сформирован!', 'success')
         return redirect(url_for('sales_report_detail', sales_report_id=report.id))
 
-    return render_template('sales_reports/sales_report_form.html', sales_report=None)
+    # Предлагаем период: со следующего дня после последнего отчёта до сегодня
+    from datetime import date as _date, timedelta
+    today = _date.today()
+    last_report = SalesReport.query.order_by(SalesReport.date_to.desc()).first()
+    if last_report and last_report.date_to:
+        suggested_date_from = (last_report.date_to + timedelta(days=1)).strftime('%Y-%m-%d')
+    else:
+        suggested_date_from = today.replace(day=1).strftime('%Y-%m-%d')
+    suggested_date_to = today.strftime('%Y-%m-%d')
+    suggested_number = _suggest_next_number('ОТЧ', SalesReport)
+    suggested_report_date = today.strftime('%Y-%m-%d')
+
+    return render_template('sales_reports/sales_report_form.html', sales_report=None,
+                           suggested_date_from=suggested_date_from,
+                           suggested_date_to=suggested_date_to,
+                           suggested_number=suggested_number,
+                           suggested_report_date=suggested_report_date)
 
 
 @app.route('/sales_report/<int:sales_report_id>')
@@ -1087,12 +1132,19 @@ def add_consignor_return():
             db.session.rollback()
             flash(_unique_error_message(e), 'danger')
             return render_template('consignor_returns/consignor_return_form.html',
-                                   ret=None, consignors=consignors)
+                                   ret=None, consignors=consignors,
+                                   preset_consignor_id=consignor_id)
         flash('Акт возврата создан!', 'success')
         return redirect(url_for('edit_consignor_return', return_id=new_return.id))
 
+    preset_consignor_id = request.args.get('preset_consignor_id', type=int)
+    suggested_number = _suggest_next_number('ВОЗ', ConsignorReturn)
+    suggested_date = datetime.today().strftime('%Y-%m-%d')
     return render_template('consignor_returns/consignor_return_form.html',
-                           ret=None, consignors=consignors)
+                           ret=None, consignors=consignors,
+                           preset_consignor_id=preset_consignor_id,
+                           suggested_number=suggested_number,
+                           suggested_date=suggested_date)
 
 
 @app.route('/consignor_returns/<int:return_id>')

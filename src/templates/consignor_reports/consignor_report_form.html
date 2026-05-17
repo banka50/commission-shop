@@ -4,16 +4,18 @@
 {% block content %}
 <h1>{{ "Редактирование акта приёма" if consignor_report else "Добавление акта приёма" }}</h1>
 
-<form method="POST">
-    <div class="form-group">
-        <label for="number">Номер акта:</label>
-        <input type="text" id="number" name="number" class="form-control" required
-               value="{{ consignor_report.number if consignor_report else '' }}">
-    </div>
-    <div class="form-group">
-        <label for="date">Дата:</label>
-        <input type="date" id="date" name="date" class="form-control" required
-               value="{{ consignor_report.date if consignor_report else '' }}">
+<form method="POST" id="reportForm">
+    <div class="form-row">
+        <div class="form-group col-md-4">
+            <label for="number">Номер акта:</label>
+            <input type="text" id="number" name="number" class="form-control" required
+                   value="{{ consignor_report.number if consignor_report else (suggested_number or '') }}">
+        </div>
+        <div class="form-group col-md-4">
+            <label for="date">Дата:</label>
+            <input type="date" id="date" name="date" class="form-control" required
+                   value="{{ consignor_report.date if consignor_report else (suggested_date or '') }}">
+        </div>
     </div>
     <div class="form-group">
         <label for="description">Описание:</label>
@@ -32,7 +34,7 @@
             </a>
         </p>
         {% else %}
-        <select id="consignor_id" name="consignor_id" class="form-control" required>
+        <select id="consignor_id" name="consignor_id" class="form-control select2-consignor" required>
             <option value="">Выбрать комитента</option>
             {% for consignor in consignors %}
                 <option value="{{ consignor.id }}">
@@ -40,6 +42,10 @@
                 </option>
             {% endfor %}
         </select>
+        <small class="text-muted mt-1" id="commission_hint_text" style="display:none;">
+            <i class="fas fa-info-circle mr-1"></i>
+            Ставки заполнены из последнего акта этого комитента
+        </small>
         {% endif %}
     </div>
     <div class="form-row">
@@ -63,4 +69,31 @@
     <a href="{{ url_for('consignor_reports_list') }}" class="btn btn-secondary">Отмена</a>
     {% endif %}
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+{% if not consignor_report and commissions %}
+const commissions = {{ commissions | tojson }};
+
+$('.select2-consignor').select2({
+    theme: 'bootstrap4',
+    placeholder: 'Выбрать комитента',
+    allowClear: true,
+    width: '100%',
+});
+
+$('.select2-consignor').on('change', function() {
+    const cid = $(this).val();
+    if (cid && commissions[cid]) {
+        const data = commissions[cid];
+        $('#commission_pct').val(data.pct);
+        $('#commission_min').val(data.min);
+        $('#commission_hint_text').show();
+    } else {
+        $('#commission_hint_text').hide();
+    }
+});
+{% endif %}
+</script>
 {% endblock %}

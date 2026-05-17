@@ -4,7 +4,7 @@
 {% block content %}
 <h1>{{ "Редактирование товара" if product else "Добавление товара" }}</h1>
 
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" enctype="multipart/form-data" id="productForm">
     <div class="form-group">
         <label for="product_name">Наименование:</label>
         <input type="text" id="product_name" name="product_name" class="form-control" required
@@ -24,6 +24,9 @@
         <label for="expiry_date">Срок реализации:</label>
         <input type="date" id="expiry_date" name="expiry_date" class="form-control" required
                value="{{ product.expiry_date if product else '' }}">
+        <div class="invalid-feedback" id="expiry_error">
+            Срок реализации не может быть раньше даты доставки.
+        </div>
     </div>
     <div class="form-group">
         <label for="price">Цена:</label>
@@ -113,6 +116,22 @@
 
 {% block scripts %}
 <script>
+// Валидация: expiry_date >= delivery_date
+document.getElementById('productForm').addEventListener('submit', function(e) {
+    const delivery = document.getElementById('delivery_date').value;
+    const expiry   = document.getElementById('expiry_date').value;
+    if (delivery && expiry && expiry < delivery) {
+        e.preventDefault();
+        const el = document.getElementById('expiry_date');
+        el.classList.add('is-invalid');
+        document.getElementById('expiry_error').style.display = 'block';
+        el.scrollIntoView({behavior: 'smooth', block: 'center'});
+    }
+});
+document.getElementById('expiry_date').addEventListener('change', function() {
+    this.classList.remove('is-invalid');
+});
+
 function toggleDeleteMark(imgId) {
     const checkbox = document.getElementById('del-check-' + imgId);
     const thumb    = document.getElementById('img-thumb-' + imgId);

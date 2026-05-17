@@ -21,7 +21,7 @@
             </small>
             {% endif %}
         {% else %}
-            <select id="product_id" name="product_id" class="form-control" required>
+            <select id="product_id" name="product_id" class="form-control select2-product" required>
                 <option value="">Выбрать товар</option>
                 {% for product in products %}
                 <option value="{{ product.id }}"
@@ -277,5 +277,21 @@ if (statusSelect.value === 'Возврат от покупателя') {
     autoFillCommission();
 }
 </script>
+
+{% if not preset_product %}
+<script>
+// Инициализация Select2 для выбора товара
+$('.select2-product').select2({
+    theme: 'bootstrap4',
+    placeholder: 'Выбрать товар',
+    allowClear: true,
+    width: '100%',
+});
+// Select2 fire jQuery change — перекидываем в native
+$('.select2-product').on('change', function() {
+    this.dispatchEvent(new Event('change'));
+});
+</script>
+{% endif %}
 {% endif %}
 {% endblock %}

@@ -4,7 +4,7 @@
 {% block content %}
 <h1>{{ "Редактирование комитента" if consignor else "Добавление комитента" }}</h1>
 
-<form method="POST">
+<form method="POST" id="consignorForm">
     <div class="form-group">
         <label for="last_name">Фамилия:</label>
         <input type="text" id="last_name" name="last_name" class="form-control" required
@@ -28,7 +28,10 @@
     <div class="form-group">
         <label for="phone_number">Номер телефона:</label>
         <input type="text" id="phone_number" name="phone_number" class="form-control" required
+               pattern="[\d\+\-\(\)\s]{7,20}"
+               title="Введите номер телефона (цифры, +, -, пробелы)"
                value="{{ consignor.phone_number if consignor else '' }}">
+        <div class="invalid-feedback">Введите корректный номер телефона.</div>
     </div>
     <div class="form-group">
         <label for="passport_data">Паспортные данные:</label>
@@ -38,7 +41,12 @@
     <div class="form-group">
         <label for="INN">ИНН:</label>
         <input type="text" id="INN" name="INN" class="form-control" required
+               pattern="\d{12}"
+               title="ИНН — 12 цифр"
+               inputmode="numeric"
+               maxlength="12"
                value="{{ consignor.inn if consignor else '' }}">
+        <div class="invalid-feedback">ИНН должен содержать ровно 12 цифр.</div>
     </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if consignor else "Добавить" }}</button>
     {% if consignor and request.args.get('back') == 'detail' %}
@@ -47,4 +55,25 @@
     <a href="{{ url_for('consignors_list') }}" class="btn btn-secondary">Отмена</a>
     {% endif %}
 </form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Показываем ошибки валидации при попытке отправки
+document.getElementById('consignorForm').addEventListener('submit', function() {
+    this.querySelectorAll('[pattern]').forEach(function(el) {
+        if (!el.validity.valid) {
+            el.classList.add('is-invalid');
+        }
+    });
+});
+document.querySelectorAll('#consignorForm [pattern]').forEach(function(el) {
+    el.addEventListener('input', function() {
+        if (this.validity.valid) {
+            this.classList.remove('is-invalid');
+        }
+    });
+});
+</script>
 {% endblock %}
