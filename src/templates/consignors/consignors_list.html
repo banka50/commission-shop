@@ -69,8 +69,7 @@
                     <button class="btn btn-outline-danger btn-delete-modal"
                             data-action="{{ url_for('delete_consignor', consignor_id=c.id) }}"
                             data-message="Удалить комитента {{ c.last_name }} {{ c.first_name }}? Это действие необратимо."
-                            data-toggle="tooltip" title="Удалить"
-                            onclick="event.stopPropagation();">
+                            data-toggle="tooltip" title="Удалить">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>

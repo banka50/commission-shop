@@ -46,8 +46,7 @@
                     <button class="btn btn-outline-danger btn-delete-modal"
                             data-action="{{ url_for('delete_category', category_id=category.id) }}"
                             data-message="Удалить категорию «{{ category.name }}»? Товары останутся, но потеряют категорию."
-                            data-toggle="tooltip" title="Удалить"
-                            onclick="event.stopPropagation();">
+                            data-toggle="tooltip" title="Удалить">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>

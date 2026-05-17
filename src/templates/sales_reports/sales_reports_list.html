@@ -47,8 +47,7 @@
                     <button class="btn btn-outline-danger btn-delete-modal"
                             data-action="{{ url_for('delete_sales_report', sales_report_id=r.id) }}"
                             data-message="Удалить отчёт № {{ r.number }}? Это действие необратимо."
-                            data-toggle="tooltip" title="Удалить"
-                            onclick="event.stopPropagation();">
+                            data-toggle="tooltip" title="Удалить">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>

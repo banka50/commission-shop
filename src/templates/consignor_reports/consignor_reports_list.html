@@ -49,9 +49,8 @@
                     </a>
                     <button class="btn btn-outline-danger btn-delete-modal"
                             data-action="{{ url_for('delete_consignor_report', consignor_report_id=cr.id) }}"
-                            data-message="Удалить акт приёма № {{ cr.number }}? Все связанные товары будут удалены."
-                            data-toggle="tooltip" title="Удалить"
-                            onclick="event.stopPropagation();">
+                            data-message="Удалить акт приёма № {{ cr.number }}? Это действие необратимо."
+                            data-toggle="tooltip" title="Удалить">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>

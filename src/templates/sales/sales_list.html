@@ -103,8 +103,7 @@
                     <button class="btn btn-outline-danger btn-delete-modal"
                             data-action="{{ url_for('delete_sale', sale_id=sale.id) }}"
                             data-message="Удалить продажу товара «{{ sale.product.product_name if sale.product else '' }}»? Это действие необратимо."
-                            data-toggle="tooltip" title="Удалить"
-                            onclick="event.stopPropagation();">
+                            data-toggle="tooltip" title="Удалить">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>

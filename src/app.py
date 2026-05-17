@@ -291,7 +291,7 @@ def delete_consignor(consignor_id):
     consignor = Consignor.query.get_or_404(consignor_id)
 
     if consignor.consignor_reports:
-        flash('Комитента нельзя удалить, так как есть связанный с ним акт приёма.', 'error')
+        flash('Комитента нельзя удалить, так как есть связанный с ним акт приёма.', 'danger')
         return redirect(url_for('consignors_list'))
     db.session.delete(consignor)
     db.session.commit()
@@ -406,7 +406,7 @@ def delete_consignor_report(consignor_report_id):
     consignor_report = ConsignorReport.query.get_or_404(consignor_report_id)
 
     if consignor_report.products:
-        flash('Акт приёма нельзя удалить, так как есть связанный с ним товар.', 'error')
+        flash('Акт приёма нельзя удалить, так как есть связанный с ним товар.', 'danger')
         return redirect(url_for('consignor_reports_list'))
     db.session.delete(consignor_report)
     db.session.commit()
@@ -1055,7 +1055,7 @@ def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
 
     if product.sales:
-        flash('Товар нельзя удалить, так как есть связанные с ним продажи.', 'error')
+        flash('Товар нельзя удалить, так как есть связанные с ним продажи.', 'danger')
         return redirect(url_for('products_list'))
 
     for img in product.images:
