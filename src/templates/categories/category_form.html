@@ -16,6 +16,10 @@
                value="{{ category.description if category else '' }}">
     </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if category else "Добавить" }}</button>
+    {% if category and request.args.get('back') == 'detail' %}
+    <a href="{{ url_for('category_detail', category_id=category.id) }}" class="btn btn-secondary">Отмена</a>
+    {% else %}
     <a href="{{ url_for('categories_list') }}" class="btn btn-secondary">Отмена</a>
+    {% endif %}
 </form>
 {% endblock %}

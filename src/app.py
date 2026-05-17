@@ -52,6 +52,7 @@ def inject_breadcrumbs():
         'categories_list':         ('Категории',           'categories_list',         {}),
         'add_category':            ('Категории',           'categories_list',         {}),
         'edit_category':           ('Категории',           'categories_list',         {}),
+        'category_detail':         ('Категории',           'categories_list',         {}),
         'products_list':           ('Товары',              'products_list',           {}),
         'product_detail':          ('Товары',              'products_list',           {}),
         'add_product':             ('Товары',              'products_list',           {}),
@@ -657,6 +658,31 @@ def categories_list():
     return render_template('categories/categories_list.html', categories=categories)
 
 
+@app.route('/category/<int:category_id>')
+def category_detail(category_id):
+    category = Category.query.get_or_404(category_id)
+    products = category.products
+    on_display = [p for p in products if p.status == 'На витрине']
+    sold = [p for p in products if p.status == 'Продан']
+    returned = [p for p in products if p.status == 'Возвращён комитенту']
+    paid_sales = [s for p in products for s in p.sales if s.status == 'Оплачено']
+    total_revenue = sum(s.sale_price for s in paid_sales)
+    total_commission = sum(s.commission for s in paid_sales)
+    from datetime import date
+    today = date.today()
+    return render_template(
+        'categories/category_detail.html',
+        category=category,
+        products=products,
+        on_display=on_display,
+        sold=sold,
+        returned=returned,
+        total_revenue=total_revenue,
+        total_commission=total_commission,
+        today=today,
+    )
+
+
 @app.route('/add_category', methods=['GET', 'POST'])
 def add_category():
     if request.method == 'POST':
@@ -687,6 +713,8 @@ def edit_category(category_id):
             flash(_unique_error_message(e), 'danger')
             return render_template('categories/category_form.html', category=category)
         flash('Категория обновлена!', 'success')
+        if request.args.get('back') == 'detail':
+            return redirect(url_for('category_detail', category_id=category_id))
         return redirect(url_for('categories_list'))
     return render_template('categories/category_form.html', category=category)
 

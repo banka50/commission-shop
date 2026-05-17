@@ -210,6 +210,12 @@ $(document).ready(function() {
         }
     }
 
+    // Применить фильтр из ?category= в URL (переход из карточки категории)
+    const urlCategory = urlParams.get('category');
+    if (urlCategory) {
+        $('#categoryFilter').val(urlCategory).trigger('change');
+    }
+
     // ── Кликабельные строки ───────────────────────────────────────────
     $('#productsTable').on('click', 'tr.product-row', function(e) {
         if ($(e.target).closest('.btn-group, button, a, .editable-cell').length) return;
