@@ -228,6 +228,9 @@
                 $('#deleteModalForm').attr('action', action);
                 $('#deleteModal').modal('show');
             });
+
+            // Тултипы
+            $('[data-toggle="tooltip"]').tooltip({boundary: 'window'});
         });
     </script>
     {% block scripts %}{% endblock %}
