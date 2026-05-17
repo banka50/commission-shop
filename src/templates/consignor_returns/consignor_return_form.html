@@ -6,12 +6,11 @@
 
 {% if ret %}
 <div class="d-flex justify-content-end mb-2 no-print">
-    <form action="{{ url_for('delete_consignor_return', return_id=ret.id) }}" method="POST" style="display:inline;">
-        <button type="submit" class="btn btn-danger btn-sm"
-                onclick="return confirm('Удалить акт возврата? Все товары вернутся на витрину.');">
+        <button class="btn btn-danger btn-sm btn-delete-modal"
+                data-action="{{ url_for('delete_consignor_return', return_id=ret.id) }}"
+                data-message="Удалить акт возврата № {{ ret.number }}? Все товары вернутся на витрину.">
             <i class="fas fa-trash-alt"></i> Удалить акт
         </button>
-    </form>
 </div>
 {% endif %}
 

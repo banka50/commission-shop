@@ -31,11 +31,11 @@
                 <a href="{{ url_for('edit_report', report_id=report.id) }}" class="btn btn-warning btn-sm">
                     <i class="fas fa-edit"></i> Редактировать
                 </a>
-                <form action="{{ url_for('delete_report', report_id=report.id) }}" method="POST" style="display:inline;">
-                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Вы уверены, что хотите удалить отчёт?');">
-                        <i class="fas fa-trash-alt"></i> Удалить
-                    </button>
-                </form>
+                <button class="btn btn-danger btn-sm btn-delete-modal"
+                        data-action="{{ url_for('delete_report', report_id=report.id) }}"
+                        data-message="Удалить этот отчёт? Это действие необратимо.">
+                    <i class="fas fa-trash-alt"></i> Удалить
+                </button>
             </td>
         </tr>
         {% endfor %}
