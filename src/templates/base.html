@@ -231,8 +231,13 @@
                 e.preventDefault();
                 const action = $(this).data('action');
                 const message = $(this).data('message') || 'Вы уверены, что хотите удалить этот элемент?';
+                const back = $(this).data('back');
                 $('#deleteModalBody').text(message);
                 $('#deleteModalForm').attr('action', action);
+                $('#deleteModalForm input[name="back"]').remove();
+                if (back) {
+                    $('#deleteModalForm').prepend('<input type="hidden" name="back" value="' + back + '">');
+                }
                 $('#deleteModal').modal('show');
             });
 

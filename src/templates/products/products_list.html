@@ -200,6 +200,16 @@ $(document).ready(function() {
         $('.status-filter-btn[data-status="' + statusVal + '"]').addClass('active');
     }
 
+    // Применить фильтр из ?status= в URL (переход с дашборда)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlStatus = urlParams.get('status');
+    if (urlStatus) {
+        const $btn = $('.status-filter-btn[data-status="' + urlStatus + '"]');
+        if ($btn.length) {
+            $btn.trigger('click');
+        }
+    }
+
     // ── Кликабельные строки ───────────────────────────────────────────
     $('#productsTable').on('click', 'tr.product-row', function(e) {
         if ($(e.target).closest('.btn-group, button, a, .editable-cell').length) return;

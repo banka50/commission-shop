@@ -43,13 +43,13 @@
                  alt="{{ product.product_name }}"
                  style="height: 160px; width: 160px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6;">
         </a>
-        <form action="{{ url_for('delete_product_image', image_id=img.id) }}" method="POST" style="margin-top: 4px;">
-            <input type="hidden" name="back" value="detail">
-            <button type="submit" class="btn btn-danger btn-sm"
-                    onclick="return confirm('Удалить фото?');" style="width: 160px;">
-                <i class="fas fa-trash-alt"></i> Удалить
-            </button>
-        </form>
+        <button class="btn btn-danger btn-sm btn-delete-modal"
+                data-action="{{ url_for('delete_product_image', image_id=img.id) }}"
+                data-message="Удалить это фото? Действие необратимо."
+                data-back="detail"
+                style="margin-top: 4px; width: 160px;">
+            <i class="fas fa-trash-alt"></i> Удалить
+        </button>
     </div>
     {% endfor %}
 </div>
@@ -89,7 +89,9 @@
     <tbody>
         {% set last_sale = product.sales | last %}
         {% for sale in product.sales %}
-        <tr {% if sale.id == last_sale.id %}class="table-active font-weight-bold"{% endif %}>
+        <tr class="clickable-row{% if sale.id == last_sale.id %} table-active font-weight-bold{% endif %}"
+            data-href="{{ url_for('sale_detail', sale_id=sale.id, back='product') }}"
+            style="cursor: pointer;">
             <td>{{ sale.sale_date }}</td>
             <td>{{ sale.sale_price }} ₽</td>
             <td>{{ sale.commission }} ₽</td>
