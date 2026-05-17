@@ -25,17 +25,24 @@
             <td>{{ sale.commission }} ₽</td>
             <td>{{ sale_status_badge(sale.status) }}</td>
             <td>
-                <a href="{{ url_for('sale_detail', sale_id=sale.id) }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-eye"></i> Показать
-                </a>
-                <a href="{{ url_for('edit_sale', sale_id=sale.id, back='list') }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-edit"></i> Редактировать
-                </a>
-                <button class="btn btn-danger btn-sm btn-delete-modal"
-                        data-action="{{ url_for('delete_sale', sale_id=sale.id) }}"
-                        data-message="Удалить эту продажу? Это действие необратимо.">
-                    <i class="fas fa-trash-alt"></i> Удалить
-                </button>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ url_for('sale_detail', sale_id=sale.id) }}"
+                       class="btn btn-outline-primary"
+                       data-toggle="tooltip" title="Показать">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ url_for('edit_sale', sale_id=sale.id, back='list') }}"
+                       class="btn btn-outline-secondary"
+                       data-toggle="tooltip" title="Редактировать">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-outline-danger btn-delete-modal"
+                            data-action="{{ url_for('delete_sale', sale_id=sale.id) }}"
+                            data-message="Удалить эту продажу? Это действие необратимо."
+                            data-toggle="tooltip" title="Удалить">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
             </td>
         </tr>
         {% endfor %}

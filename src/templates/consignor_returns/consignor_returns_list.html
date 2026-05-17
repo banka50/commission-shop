@@ -26,17 +26,24 @@
             <td>{{ ret.products | length }}</td>
             <td>{{ ret.description or '' }}</td>
             <td>
-                <a href="{{ url_for('consignor_return_detail', return_id=ret.id) }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-eye"></i> Показать
-                </a>
-                <a href="{{ url_for('edit_consignor_return', return_id=ret.id) }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-edit"></i> Редактировать
-                </a>
-                <button class="btn btn-danger btn-sm btn-delete-modal"
-                        data-action="{{ url_for('delete_consignor_return', return_id=ret.id) }}"
-                        data-message="Удалить акт возврата № {{ ret.number }}? Все товары вернутся на витрину.">
-                    <i class="fas fa-trash-alt"></i> Удалить
-                </button>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ url_for('consignor_return_detail', return_id=ret.id) }}"
+                       class="btn btn-outline-primary"
+                       data-toggle="tooltip" title="Показать">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ url_for('edit_consignor_return', return_id=ret.id) }}"
+                       class="btn btn-outline-secondary"
+                       data-toggle="tooltip" title="Редактировать">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-outline-danger btn-delete-modal"
+                            data-action="{{ url_for('delete_consignor_return', return_id=ret.id) }}"
+                            data-message="Удалить акт возврата № {{ ret.number }}? Все товары вернутся на витрину."
+                            data-toggle="tooltip" title="Удалить">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
             </td>
         </tr>
         {% endfor %}

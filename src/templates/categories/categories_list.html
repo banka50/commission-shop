@@ -22,14 +22,19 @@
             <td>{{ category.description or '' }}</td>
             <td>{{ category.products | length }}</td>
             <td>
-                <a href="{{ url_for('edit_category', category_id=category.id) }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-edit"></i> Редактировать
-                </a>
-                <button class="btn btn-danger btn-sm btn-delete-modal"
-                        data-action="{{ url_for('delete_category', category_id=category.id) }}"
-                        data-message="Удалить категорию «{{ category.name }}»? Товары останутся, но потеряют категорию.">
-                    <i class="fas fa-trash-alt"></i> Удалить
-                </button>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ url_for('edit_category', category_id=category.id) }}"
+                       class="btn btn-outline-secondary"
+                       data-toggle="tooltip" title="Редактировать">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-outline-danger btn-delete-modal"
+                            data-action="{{ url_for('delete_category', category_id=category.id) }}"
+                            data-message="Удалить категорию «{{ category.name }}»? Товары останутся, но потеряют категорию."
+                            data-toggle="tooltip" title="Удалить">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
             </td>
         </tr>
         {% endfor %}

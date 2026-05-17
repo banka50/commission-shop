@@ -31,17 +31,24 @@
             <td>{{ consignor.passport_data }}</td>
             <td>{{ consignor.inn }}</td>
             <td>
-                <a href="{{ url_for('consignor_detail', consignor_id=consignor.id) }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-eye"></i> Показать
-                </a>
-                <a href="{{ url_for('edit_consignor', consignor_id=consignor.id) }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-edit"></i> Редактировать
-                </a>
-                <button class="btn btn-danger btn-sm btn-delete-modal"
-                        data-action="{{ url_for('delete_consignor', consignor_id=consignor.id) }}"
-                        data-message="Удалить комитента {{ consignor.last_name }} {{ consignor.first_name }}? Это действие необратимо.">
-                    <i class="fas fa-trash-alt"></i> Удалить
-                </button>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ url_for('consignor_detail', consignor_id=consignor.id) }}"
+                       class="btn btn-outline-primary"
+                       data-toggle="tooltip" title="Показать">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ url_for('edit_consignor', consignor_id=consignor.id) }}"
+                       class="btn btn-outline-secondary"
+                       data-toggle="tooltip" title="Редактировать">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-outline-danger btn-delete-modal"
+                            data-action="{{ url_for('delete_consignor', consignor_id=consignor.id) }}"
+                            data-message="Удалить комитента {{ consignor.last_name }} {{ consignor.first_name }}? Это действие необратимо."
+                            data-toggle="tooltip" title="Удалить">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
             </td>
         </tr>
         {% endfor %}
