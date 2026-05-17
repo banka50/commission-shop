@@ -10,6 +10,9 @@
         <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-success">
             <i class="fas fa-plus"></i> Оформить продажу
         </a>
+        <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#quickReturnModal">
+            <i class="fas fa-undo"></i> Вернуть комитенту
+        </button>
         {% elif product.status == 'Продан' %}
         <a href="{{ url_for('add_sale', product_id=product.id) }}" class="btn btn-outline-warning">
             <i class="fas fa-undo"></i> Возврат от покупателя
@@ -232,6 +235,86 @@
 <p class="text-muted">Продаж ещё не было.</p>
 {% endif %}
 
+{% if product.status == 'На витрине' %}
+<!-- Модальное окно быстрого возврата -->
+<div class="modal fade" id="quickReturnModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-undo mr-2"></i>Вернуть комитенту
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">
+                    Товар: <strong>{{ product.product_name }}</strong>
+                </p>
+
+                <!-- Переключатель режима -->
+                <div class="btn-group btn-group-sm w-100 mb-3" role="group" id="returnModeGroup">
+                    <button type="button" class="btn btn-outline-primary active" id="modeNewBtn" onclick="setMode('new')">
+                        <i class="fas fa-plus-circle mr-1"></i>Новый акт
+                    </button>
+                    {% if existing_returns %}
+                    <button type="button" class="btn btn-outline-primary" id="modeExistingBtn" onclick="setMode('existing')">
+                        <i class="fas fa-folder-open mr-1"></i>Существующий акт
+                    </button>
+                    {% endif %}
+                </div>
+
+                <form id="quickReturnForm" method="POST"
+                      action="{{ url_for('quick_return', product_id=product.id) }}">
+                    <input type="hidden" name="mode" id="returnMode" value="new">
+
+                    <!-- Новый акт -->
+                    <div id="newActFields">
+                        <div class="form-group">
+                            <label for="ret_number">Номер акта</label>
+                            <input type="text" id="ret_number" name="number" class="form-control"
+                                   value="{{ suggested_number }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ret_date">Дата</label>
+                            <input type="date" id="ret_date" name="date" class="form-control"
+                                   value="{{ today }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ret_description">Примечание <small class="text-muted">(необязательно)</small></label>
+                            <input type="text" id="ret_description" name="description" class="form-control"
+                                   placeholder="Например: срок реализации истёк">
+                        </div>
+                    </div>
+
+                    <!-- Существующий акт -->
+                    {% if existing_returns %}
+                    <div id="existingActFields" style="display:none;">
+                        <div class="form-group">
+                            <label for="ret_select">Выбрать акт</label>
+                            <select id="ret_select" name="return_id" class="form-control">
+                                {% for r in existing_returns %}
+                                <option value="{{ r.id }}">
+                                    {{ r.number }} от {{ r.date.strftime('%d.%m.%Y') }}
+                                    — {{ r.products | length }} тов.
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="submitReturn()">
+                    <i class="fas fa-undo mr-1"></i>Вернуть
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% block scripts %}
 <script>
 document.getElementById('images').addEventListener('change', function () {
@@ -244,6 +327,34 @@ document.getElementById('images').addEventListener('change', function () {
         label.textContent = 'Выбрано файлов: ' + this.files.length;
     }
 });
+
+function setMode(mode) {
+    document.getElementById('returnMode').value = mode;
+    const newFields = document.getElementById('newActFields');
+    const existFields = document.getElementById('existingActFields');
+    const newBtn = document.getElementById('modeNewBtn');
+    const existBtn = document.getElementById('modeExistingBtn');
+
+    if (mode === 'new') {
+        if (newFields) newFields.style.display = '';
+        if (existFields) existFields.style.display = 'none';
+        if (newBtn) { newBtn.classList.add('active'); newBtn.classList.replace('btn-outline-primary', 'btn-primary'); }
+        if (existBtn) { existBtn.classList.remove('active'); existBtn.classList.replace('btn-primary', 'btn-outline-primary'); }
+        document.getElementById('ret_number').required = true;
+        document.getElementById('ret_date').required = true;
+    } else {
+        if (newFields) newFields.style.display = 'none';
+        if (existFields) existFields.style.display = '';
+        if (existBtn) { existBtn.classList.add('active'); existBtn.classList.replace('btn-outline-primary', 'btn-primary'); }
+        if (newBtn) { newBtn.classList.remove('active'); newBtn.classList.replace('btn-primary', 'btn-outline-primary'); }
+        document.getElementById('ret_number').required = false;
+        document.getElementById('ret_date').required = false;
+    }
+}
+
+function submitReturn() {
+    document.getElementById('quickReturnForm').submit();
+}
 </script>
 {% endblock %}
 {% endblock %}

@@ -96,13 +96,11 @@
             <td>{{ product.price }} ₽</td>
             <td>{{ product.consignor_report.number }}</td>
             <td class="no-print">
-                <form action="{{ url_for('remove_product_from_return', return_id=ret.id, product_id=product.id) }}"
-                      method="POST" style="display:inline;">
-                    <button type="submit" class="btn btn-outline-warning btn-sm"
-                            onclick="return confirm('Убрать товар из акта? Он вернётся на витрину.');">
-                        <i class="fas fa-times"></i> Убрать
-                    </button>
-                </form>
+                <button class="btn btn-outline-warning btn-sm btn-delete-modal"
+                        data-action="{{ url_for('remove_product_from_return', return_id=ret.id, product_id=product.id) }}"
+                        data-message="Убрать «{{ product.product_name }}» из акта? Товар вернётся на витрину.">
+                    <i class="fas fa-times"></i> Убрать
+                </button>
             </td>
         </tr>
         {% endfor %}

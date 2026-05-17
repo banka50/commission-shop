@@ -934,6 +934,21 @@ def product_detail(product_id):
     total_commission = sum(s.commission for s in paid_sales)
     total_payable = total_revenue - total_commission
 
+    # Данные для быстрого возврата
+    existing_returns = []
+    suggested_number = ''
+    if product.consignor_report and product.status == 'На витрине':
+        consignor_id = product.consignor_report.consignor_id
+        existing_returns = (
+            ConsignorReturn.query
+            .filter_by(consignor_id=consignor_id)
+            .order_by(ConsignorReturn.date.desc())
+            .limit(10)
+            .all()
+        )
+        count = ConsignorReturn.query.count()
+        suggested_number = f'ВОЗ-{today.strftime("%Y%m%d")}-{count + 1}'
+
     return render_template(
         'products/product_detail.html',
         product=product,
@@ -944,6 +959,8 @@ def product_detail(product_id):
         total_revenue=total_revenue,
         total_commission=total_commission,
         total_payable=total_payable,
+        existing_returns=existing_returns,
+        suggested_number=suggested_number,
     )
 
 
@@ -1081,10 +1098,17 @@ def add_consignor_return():
 @app.route('/consignor_returns/<int:return_id>')
 def consignor_return_detail(return_id):
     ret = ConsignorReturn.query.get_or_404(return_id)
-    # Товары комитента, которые на витрине или уже возвращены этим актом
+    from sqlalchemy import or_, and_
+    # Товары этого комитента, которые либо на витрине, либо уже в этом конкретном акте
     available_products = Product.query.filter(
         Product.consignor_report.has(consignor_id=ret.consignor_id),
-        Product.status.in_(['На витрине', 'Возвращён комитенту']),
+        or_(
+            Product.status == 'На витрине',
+            and_(
+                Product.status == 'Возвращён комитенту',
+                Product.consignor_return_id == ret.id,
+            )
+        )
     ).all()
     return render_template('consignor_returns/consignor_return_detail.html',
                            ret=ret, available_products=available_products)
@@ -1143,11 +1167,16 @@ def add_product_to_return(return_id):
     ret = ConsignorReturn.query.get_or_404(return_id)
     product_id = int(request.form['product_id'])
     product = Product.query.get_or_404(product_id)
+    if product.consignor_return_id and product.consignor_return_id != return_id:
+        other = ConsignorReturn.query.get(product.consignor_return_id)
+        num = other.number if other else '—'
+        flash(f'Товар «{product.product_name}» уже включён в акт возврата № {num}.', 'danger')
+        return redirect(url_for('consignor_return_detail', return_id=return_id))
     product.consignor_return_id = ret.id
     product.status = 'Возвращён комитенту'
     db.session.commit()
     flash(f'Товар «{product.product_name}» добавлен в акт возврата.', 'success')
-    return redirect(url_for('edit_consignor_return', return_id=return_id))
+    return redirect(url_for('consignor_return_detail', return_id=return_id))
 
 
 @app.route('/remove_product_from_return/<int:return_id>/<int:product_id>', methods=['POST'])
@@ -1158,6 +1187,51 @@ def remove_product_from_return(return_id, product_id):
     db.session.commit()
     flash(f'Товар «{product.product_name}» убран из акта возврата.', 'success')
     return redirect(url_for('edit_consignor_return', return_id=return_id))
+
+
+@app.route('/products/<int:product_id>/quick_return', methods=['POST'])
+def quick_return(product_id):
+    from datetime import date as date_type
+    product = Product.query.get_or_404(product_id)
+    if product.status != 'На витрине':
+        flash('Вернуть можно только товар со статусом «На витрине».', 'danger')
+        return redirect(url_for('product_detail', product_id=product_id))
+
+    mode = request.form.get('mode', 'new')
+
+    if mode == 'existing':
+        return_id = request.form.get('return_id', type=int)
+        ret = ConsignorReturn.query.get_or_404(return_id)
+        if product.consignor_return_id and product.consignor_return_id != ret.id:
+            other = ConsignorReturn.query.get(product.consignor_return_id)
+            flash(f'Товар уже включён в акт возврата № {other.number if other else "—"}.', 'danger')
+            return redirect(url_for('product_detail', product_id=product_id))
+    else:
+        number = request.form.get('number', '').strip()
+        date_str = request.form.get('date', '')
+        description = request.form.get('description', '').strip() or None
+        today = date_type.today()
+        ret_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else today
+        consignor_id = product.consignor_report.consignor_id
+        ret = ConsignorReturn(
+            number=number,
+            date=ret_date,
+            description=description,
+            consignor_id=consignor_id,
+        )
+        db.session.add(ret)
+        try:
+            db.session.flush()
+        except IntegrityError:
+            db.session.rollback()
+            flash(f'Акт с номером «{number}» уже существует. Выберите другой номер.', 'danger')
+            return redirect(url_for('product_detail', product_id=product_id))
+
+    product.consignor_return_id = ret.id
+    product.status = 'Возвращён комитенту'
+    db.session.commit()
+    flash(f'Товар «{product.product_name}» возвращён комитенту, акт {ret.number}.', 'success')
+    return redirect(url_for('consignor_return_detail', return_id=ret.id))
 
 
 # ==============================
