@@ -541,9 +541,11 @@ def products_list():
     products = Product.query.all()
     consignor_reports = ConsignorReport.query.all()
     consignor_reports_dict = {cr.id: cr.number for cr in consignor_reports}
+    categories = Category.query.order_by(Category.name).all()
 
     return render_template('products/products_list.html', products=products,
-                           consignor_reports=consignor_reports_dict)
+                           consignor_reports=consignor_reports_dict,
+                           categories=categories)
 
 
 @app.route('/add_product', methods=['GET', 'POST'])
