@@ -109,6 +109,7 @@
     <script>
         $(document).ready(function() {
             $('table.table:not(.no-datatable)').DataTable({
+                stateSave: true,
                 language: {
                     search: 'Поиск:',
                     lengthMenu: 'Показать _MENU_ записей',
