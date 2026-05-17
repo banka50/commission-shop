@@ -17,6 +17,16 @@
         .border-left-warning  { border-left: 4px solid #f6c23e !important; }
         .border-left-danger   { border-left: 4px solid #e74a3b !important; }
 
+        #sidebar-wrapper .list-group-item.active {
+            background-color: #4e73df !important;
+            border-color: #4e73df !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+        #sidebar-wrapper .list-group-item.active i {
+            color: #fff !important;
+        }
+
         @media print {
             /* Скрыть навигацию, кнопки, DataTables controls */
             #sidebar-wrapper,
@@ -48,28 +58,28 @@
                 Комиссионный магазин
             </div>
             <div class="list-group list-group-flush">
-                <a href="{{ url_for('dashboard') }}" class="list-group-item list-group-item-action bg-light">
+                <a href="{{ url_for('dashboard') }}" class="list-group-item list-group-item-action bg-light {% if request.endpoint == 'dashboard' %}active{% endif %}">
                     <i class="fas fa-tachometer-alt fa-fw"></i> Дашборд
                 </a>
-                <a href="{{ url_for('consignors_list') }}" class="list-group-item list-group-item-action bg-light">
+                <a href="{{ url_for('consignors_list') }}" class="list-group-item list-group-item-action bg-light {% if request.endpoint in ('consignors_list', 'consignor_detail', 'add_consignor', 'edit_consignor') %}active{% endif %}">
                     <i class="fas fa-user-friends fa-fw"></i> Комитенты
                 </a>
-                <a href="{{ url_for('categories_list') }}" class="list-group-item list-group-item-action bg-light">
+                <a href="{{ url_for('categories_list') }}" class="list-group-item list-group-item-action bg-light {% if request.endpoint in ('categories_list', 'add_category', 'edit_category') %}active{% endif %}">
                     <i class="fas fa-tags fa-fw"></i> Категории
                 </a>
-                <a href="{{ url_for('products_list') }}" class="list-group-item list-group-item-action bg-light">
+                <a href="{{ url_for('products_list') }}" class="list-group-item list-group-item-action bg-light {% if request.endpoint in ('products_list', 'product_detail', 'add_product', 'edit_product') %}active{% endif %}">
                     <i class="fas fa-boxes fa-fw"></i> Товары
                 </a>
-                <a href="{{ url_for('sales_list') }}" class="list-group-item list-group-item-action bg-light">
+                <a href="{{ url_for('sales_list') }}" class="list-group-item list-group-item-action bg-light {% if request.endpoint in ('sales_list', 'sale_detail', 'add_sale', 'edit_sale') %}active{% endif %}">
                     <i class="fas fa-shopping-bag fa-fw"></i> Продажи
                 </a>
-                <a href="{{ url_for('consignor_reports_list') }}" class="list-group-item list-group-item-action bg-light">
+                <a href="{{ url_for('consignor_reports_list') }}" class="list-group-item list-group-item-action bg-light {% if request.endpoint in ('consignor_reports_list', 'consignor_report_detail', 'add_consignor_report', 'edit_consignor_report') %}active{% endif %}">
                     <i class="fas fa-file-import fa-fw"></i> Акты приёма
                 </a>
-                <a href="{{ url_for('consignor_returns_list') }}" class="list-group-item list-group-item-action bg-light">
+                <a href="{{ url_for('consignor_returns_list') }}" class="list-group-item list-group-item-action bg-light {% if request.endpoint in ('consignor_returns_list', 'consignor_return_detail', 'add_consignor_return', 'edit_consignor_return') %}active{% endif %}">
                     <i class="fas fa-undo fa-fw"></i> Акты возврата
                 </a>
-                <a href="{{ url_for('sales_reports_list') }}" class="list-group-item list-group-item-action bg-light">
+                <a href="{{ url_for('sales_reports_list') }}" class="list-group-item list-group-item-action bg-light {% if request.endpoint in ('sales_reports_list', 'sales_report_detail', 'add_sales_report', 'edit_sales_report') %}active{% endif %}">
                     <i class="fas fa-chart-bar fa-fw"></i> Отчёты по продажам
                 </a>
             </div>
