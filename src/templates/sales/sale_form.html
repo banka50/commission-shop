@@ -17,8 +17,9 @@
                 <option value="">Выбрать товар</option>
                 {% for product in products %}
                 <option value="{{ product.id }}"
+                        data-status="{{ product.status }}"
                         {% if sale and sale.product_id == product.id %}selected{% endif %}>
-                    {{ product.product_name }} ({{ product.price }} ₽)
+                    {{ product.product_name }} ({{ product.price }} ₽) — {{ product.status }}
                 </option>
                 {% endfor %}
             </select>
@@ -34,6 +35,9 @@
         <select id="status" name="status" class="form-control" required>
             {% if preset_product and preset_product.status == 'Продан' %}
                 <option value="Возврат от покупателя" selected>Возврат от покупателя</option>
+            {% elif preset_product and preset_product.status == 'На витрине' %}
+                <option value="Ожидает оплаты" {% if sale and sale.status == 'Ожидает оплаты' %}selected{% endif %}>Ожидает оплаты</option>
+                <option value="Оплачено" {% if sale and sale.status == 'Оплачено' %}selected{% endif %}>Оплачено</option>
             {% else %}
                 <option value="Ожидает оплаты" {% if sale and sale.status == 'Ожидает оплаты' %}selected{% endif %}>Ожидает оплаты</option>
                 <option value="Оплачено" {% if sale and sale.status == 'Оплачено' %}selected{% endif %}>Оплачено</option>
@@ -96,6 +100,7 @@ const priceLockHint = document.getElementById('price_locked_hint');
 const refundWrap = document.getElementById('refund_commission_wrap');
 const refundCheckbox = document.getElementById('refund_commission');
 const priceLabel = document.getElementById('price_label');
+const productSelect = document.getElementById('product_id');
 
 {% if last_paid_sale %}
 const lastPrice = {{ last_paid_sale.sale_price | float }};
@@ -104,6 +109,42 @@ const lastCommission = {{ last_paid_sale.commission | float }};
 const lastPrice = null;
 const lastCommission = null;
 {% endif %}
+
+function setStatusOptions(productStatus) {
+    if (!productSelect) return; // fixed preset — ничего не меняем
+    const current = statusSelect.value;
+    statusSelect.innerHTML = '';
+    if (productStatus === 'Продан') {
+        statusSelect.insertAdjacentHTML('beforeend',
+            '<option value="Возврат от покупателя">Возврат от покупателя</option>');
+    } else if (productStatus === 'На витрине') {
+        statusSelect.insertAdjacentHTML('beforeend',
+            '<option value="Ожидает оплаты">Ожидает оплаты</option>' +
+            '<option value="Оплачено">Оплачено</option>');
+    } else {
+        statusSelect.insertAdjacentHTML('beforeend',
+            '<option value="Ожидает оплаты">Ожидает оплаты</option>' +
+            '<option value="Оплачено">Оплачено</option>' +
+            '<option value="Возврат от покупателя">Возврат от покупателя</option>');
+    }
+    // восстановить выбранный статус если он ещё доступен
+    if ([...statusSelect.options].some(o => o.value === current)) {
+        statusSelect.value = current;
+    }
+    applyReturnMode(statusSelect.value === 'Возврат от покупателя');
+}
+
+if (productSelect) {
+    productSelect.addEventListener('change', function() {
+        const opt = this.options[this.selectedIndex];
+        setStatusOptions(opt ? opt.dataset.status : '');
+    });
+    // применить при загрузке если товар уже выбран
+    const initOpt = productSelect.options[productSelect.selectedIndex];
+    if (initOpt && initOpt.value) {
+        setStatusOptions(initOpt.dataset.status);
+    }
+}
 
 function applyReturnMode(isReturn) {
     priceLabel.textContent = isReturn ? 'Сумма возврата:' : 'Цена продажи:';

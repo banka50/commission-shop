@@ -491,7 +491,7 @@ def _update_product_status(product: Product) -> None:
 
 @app.route('/add_sale', methods=['GET', 'POST'])
 def add_sale():
-    products = Product.query.all()
+    products = Product.query.filter(Product.status != 'Возвращён комитенту').order_by(Product.product_name).all()
     preset_product_id = request.args.get('product_id', type=int)
     preset_product = db.session.get(Product, preset_product_id) if preset_product_id else None
 
