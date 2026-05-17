@@ -852,11 +852,16 @@ def products_list():
     categories = Category.query.order_by(Category.name).all()
     from datetime import date as date_type
     today = date_type.today()
+    overdue_count = sum(
+        1 for p in products
+        if p.status == 'На витрине' and p.expiry_date and p.expiry_date < today
+    )
 
     return render_template('products/products_list.html', products=products,
                            consignor_reports=consignor_reports_dict,
                            categories=categories,
-                           today=today)
+                           today=today,
+                           overdue_count=overdue_count)
 
 
 @app.route('/add_product', methods=['GET', 'POST'])
@@ -1251,12 +1256,10 @@ def dashboard():
 def search():
     from sqlalchemy import or_
     q = request.args.get('q', '').strip()
-    results = {'products': [], 'consignors': [], 'consignor_reports': [], 'consignor_returns': []}
+    results = {'products': [], 'consignors': [], 'consignor_reports': [], 'consignor_returns': [], 'sales': []}
     total = 0
 
     if q and len(q) >= 2:
-        # SQLite lower() не поддерживает кириллицу, поэтому ищем как есть.
-        # Для покрытия обоих регистров первой буквы добавляем два варианта.
         pat = f'%{q}%'
         pat_cap = f'%{q[0].upper()}{q[1:]}%'
         pat_low = f'%{q[0].lower()}{q[1:]}%'
@@ -1285,23 +1288,43 @@ def search():
             )
         ).order_by(Consignor.last_name).limit(20).all()
 
-        results['consignor_reports'] = ConsignorReport.query.filter(
+        results['consignor_reports'] = ConsignorReport.query.join(
+            Consignor, ConsignorReport.consignor_id == Consignor.id
+        ).filter(
             or_(
                 ConsignorReport.number.like(pat),
                 ConsignorReport.description.like(pat),
                 ConsignorReport.description.like(pat_cap),
                 ConsignorReport.description.like(pat_low),
+                Consignor.last_name.like(pat),
+                Consignor.last_name.like(pat_cap),
+                Consignor.last_name.like(pat_low),
             )
         ).order_by(ConsignorReport.date.desc()).limit(20).all()
 
-        results['consignor_returns'] = ConsignorReturn.query.filter(
+        results['consignor_returns'] = ConsignorReturn.query.join(
+            Consignor, ConsignorReturn.consignor_id == Consignor.id
+        ).filter(
             or_(
                 ConsignorReturn.number.like(pat),
                 ConsignorReturn.description.like(pat),
                 ConsignorReturn.description.like(pat_cap),
                 ConsignorReturn.description.like(pat_low),
+                Consignor.last_name.like(pat),
+                Consignor.last_name.like(pat_cap),
+                Consignor.last_name.like(pat_low),
             )
         ).order_by(ConsignorReturn.date.desc()).limit(20).all()
+
+        results['sales'] = Sale.query.join(
+            Product, Sale.product_id == Product.id
+        ).filter(
+            or_(
+                Product.product_name.like(pat),
+                Product.product_name.like(pat_cap),
+                Product.product_name.like(pat_low),
+            )
+        ).order_by(Sale.sale_date.desc()).limit(20).all()
 
         total = sum(len(v) for v in results.values())
 

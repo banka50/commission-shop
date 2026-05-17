@@ -83,7 +83,7 @@
             {% if expired %}table-danger
             {% elif expiring_soon %}table-warning
             {% endif %}"
-            data-href="{{ url_for('product_detail', product_id=p.id) }}"
+            data-href="{{ url_for('product_detail', product_id=p.id, back='category', category_id=category.id) }}"
             style="cursor:pointer;">
             <td>{{ p.product_name }}</td>
             <td>{{ product_status_badge(p.status) }}</td>
@@ -108,9 +108,15 @@
     <a href="{{ url_for('edit_category', category_id=category.id, back='detail') }}" class="btn btn-warning">
         <i class="fas fa-edit"></i> Редактировать
     </a>
+    {% if request.args.get('back') == 'product' and request.args.get('product_id') %}
+    <a href="{{ url_for('product_detail', product_id=request.args.get('product_id')) }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к товару
+    </a>
+    {% else %}
     <a href="{{ url_for('categories_list') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к категориям
     </a>
+    {% endif %}
 </div>
 {% endblock %}
 

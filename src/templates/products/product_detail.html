@@ -26,6 +26,10 @@
         <a href="{{ url_for('consignor_report_detail', consignor_report_id=request.args.get('report_id')) }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> К акту приёма
         </a>
+        {% elif request.args.get('back') == 'category' and request.args.get('category_id') %}
+        <a href="{{ url_for('category_detail', category_id=request.args.get('category_id')) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> К категории
+        </a>
         {% else %}
         <a href="{{ url_for('products_list') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> К товарам
@@ -84,7 +88,7 @@
                 <p class="mb-2"><strong>Цена:</strong> {{ product.price }} ₽</p>
                 {% if product.category %}
                 <p class="mb-2"><strong>Категория:</strong>
-                    <a href="{{ url_for('category_detail', category_id=product.category_id) }}">
+                    <a href="{{ url_for('category_detail', category_id=product.category_id, back='product', product_id=product.id) }}">
                         {{ product.category.name }}
                     </a>
                 </p>

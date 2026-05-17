@@ -55,6 +55,7 @@ _app_section = _toml.get('app', {})
 
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    TEMPLATES_AUTO_RELOAD = True
     SECRET_KEY = _get('SECRET_KEY', _app_section, 'secret_key', 'supersecretkey')
     SQLALCHEMY_DATABASE_URI = _build_uri(_toml)
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')

@@ -28,6 +28,12 @@
         <button class="btn btn-sm btn-outline-secondary status-filter-btn" data-status="Возвращён комитенту">
             Возвращён <span class="badge badge-secondary ml-1">{{ products | selectattr('status', 'eq', 'Возвращён комитенту') | list | length }}</span>
         </button>
+        {% if overdue_count > 0 %}
+        <button class="btn btn-sm btn-outline-danger overdue-filter-btn" id="overdueFilterBtn">
+            <i class="fas fa-exclamation-circle mr-1"></i>Просроченные
+            <span class="badge badge-danger ml-1">{{ overdue_count }}</span>
+        </button>
+        {% endif %}
         <!-- Фильтр по категории -->
         <div class="d-flex align-items-center ml-2">
             <label for="categoryFilter" class="mb-0 text-nowrap mr-2">Категория:</label>
@@ -56,6 +62,7 @@
             <th>Комитент</th>
             <th>Последняя продажа</th>
             <th>Действия</th>
+            <th class="d-none">_expired</th>
         </tr>
     </thead>
     <tbody>
@@ -118,6 +125,7 @@
                     </button>
                 </div>
             </td>
+            <td class="d-none">{{ '1' if expired else '0' }}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -161,6 +169,7 @@ $(document).ready(function() {
         columnDefs: [
             {targets: [4, 5], visible: false},  // Описание, Дата доставки — скрыты по умолчанию
             {targets: [0], orderable: false},    // фото — несортируемо
+            {targets: [11], visible: false, searchable: true},  // _expired — скрыта, доступна для поиска
         ],
         dom: '<"d-flex justify-content-between align-items-center mb-2"lB>frtip',
         buttons: [
@@ -181,12 +190,25 @@ $(document).ready(function() {
     // Кнопки-фильтры статуса
     $('.status-filter-btn').on('click', function() {
         $('.status-filter-btn').removeClass('active btn-success btn-primary btn-secondary btn-dark');
+        $('#overdueFilterBtn').removeClass('active btn-danger').addClass('btn-outline-danger');
         $(this).addClass('active');
         const status = $(this).data('status');
         const val = status ? $.fn.dataTable.util.escapeRegex(status) : '';
-        table.column(2).search(val ? '^' + val + '$' : '', true, false).draw();
+        table.column(2).search(val ? '^' + val + '$' : '', true, false);
+        table.column(11).search('');  // сбросить фильтр просроченных
+        table.draw();
         const csvUrl = '{{ url_for("export_products_csv") }}' + (status ? '?status=' + encodeURIComponent(status) : '');
         document.getElementById('exportCsvBtn').href = csvUrl;
+    });
+
+    // Кнопка «Просроченные»
+    $('#overdueFilterBtn').on('click', function() {
+        $('.status-filter-btn').removeClass('active btn-success btn-primary btn-secondary btn-dark');
+        $(this).removeClass('btn-outline-danger').addClass('active btn-danger');
+        table.column(2).search('^На витрине$', true, false);
+        table.column(11).search('^1$', true, false);
+        table.draw();
+        document.getElementById('exportCsvBtn').href = '{{ url_for("export_products_csv") }}?status=%D0%9D%D0%B0+%D0%B2%D0%B8%D1%82%D1%80%D0%B8%D0%BD%D0%B5';
     });
 
     $('#categoryFilter').on('change', function() { applyFilter(3, '#categoryFilter'); });
@@ -201,7 +223,10 @@ $(document).ready(function() {
 
     // Восстановить активную кнопку статуса
     const savedStatus = table.column(2).search();
-    if (savedStatus) {
+    const savedExpired = table.column(11).search();
+    if (savedExpired === '^1$') {
+        $('#overdueFilterBtn').removeClass('btn-outline-danger').addClass('active btn-danger');
+    } else if (savedStatus) {
         const statusVal = savedStatus.replace(/^\^/, '').replace(/\$$/, '');
         $('.status-filter-btn').removeClass('active');
         $('.status-filter-btn[data-status="' + statusVal + '"]').addClass('active');
@@ -215,6 +240,11 @@ $(document).ready(function() {
         if ($btn.length) {
             $btn.trigger('click');
         }
+    }
+
+    // Применить фильтр ?overdue=1 — нажать кнопку «Просроченные»
+    if (urlParams.get('overdue')) {
+        $('#overdueFilterBtn').trigger('click');
     }
 
     // Применить фильтр из ?category= в URL (переход из карточки категории)
