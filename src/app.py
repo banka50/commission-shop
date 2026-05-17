@@ -983,6 +983,8 @@ def edit_consignor_return(return_id):
                                    ret=ret, consignors=consignors,
                                    available_products=available_products)
         flash('Акт возврата обновлён!', 'success')
+        if request.args.get('back') == 'detail':
+            return redirect(url_for('consignor_return_detail', return_id=ret.id))
         return redirect(url_for('edit_consignor_return', return_id=ret.id))
 
     available_products = Product.query.filter(

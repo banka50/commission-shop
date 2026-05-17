@@ -58,6 +58,10 @@
     <a href="{{ url_for('consignor_detail', consignor_id=request.args.get('consignor_id')) }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к комитенту
     </a>
+    {% elif request.args.get('back') == 'product' and request.args.get('product_id') %}
+    <a href="{{ url_for('product_detail', product_id=request.args.get('product_id')) }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к товару
+    </a>
     {% else %}
     <a href="{{ url_for('consignor_reports_list') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к актам приёма

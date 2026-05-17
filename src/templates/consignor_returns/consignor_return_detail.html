@@ -70,12 +70,16 @@
 {% endif %}
 
 <div class="mt-4">
-    <a href="{{ url_for('edit_consignor_return', return_id=ret.id) }}" class="btn btn-warning">
+    <a href="{{ url_for('edit_consignor_return', return_id=ret.id, back='detail') }}" class="btn btn-warning">
         <i class="fas fa-edit"></i> Редактировать
     </a>
     {% if request.args.get('back') == 'consignor' and request.args.get('consignor_id') %}
     <a href="{{ url_for('consignor_detail', consignor_id=request.args.get('consignor_id')) }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к комитенту
+    </a>
+    {% elif request.args.get('back') == 'product' and request.args.get('product_id') %}
+    <a href="{{ url_for('product_detail', product_id=request.args.get('product_id')) }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к товару
     </a>
     {% else %}
     <a href="{{ url_for('consignor_returns_list') }}" class="btn btn-secondary">
