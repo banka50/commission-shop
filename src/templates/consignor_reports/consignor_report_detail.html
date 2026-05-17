@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros.html" import product_status_badge %}
 {% block title %}Акт приёма № {{ consignor_report.number }} — Комиссионный магазин{% endblock %}
 
 {% block content %}
@@ -41,15 +42,7 @@
             <td>{{ product.price }} ₽</td>
             <td>{{ product.delivery_date }}</td>
             <td>{{ product.expiry_date }}</td>
-            <td>
-                {% if product.status == 'На витрине' %}
-                    <span class="badge badge-success">На витрине</span>
-                {% elif product.status == 'Продан' %}
-                    <span class="badge badge-primary">Продан</span>
-                {% else %}
-                    <span class="badge badge-secondary">Возвращён комитенту</span>
-                {% endif %}
-            </td>
+            <td>{{ product_status_badge(product.status) }}</td>
         </tr>
         {% endfor %}
     </tbody>

@@ -1,0 +1,21 @@
+{% macro product_status_badge(status) %}
+    {% if status == 'На витрине' %}
+        <span class="badge badge-success">На витрине</span>
+    {% elif status == 'Продан' %}
+        <span class="badge badge-primary">Продан</span>
+    {% else %}
+        <span class="badge badge-secondary">{{ status }}</span>
+    {% endif %}
+{% endmacro %}
+
+{% macro sale_status_badge(status) %}
+    {% if status == 'Оплачено' %}
+        <span class="badge badge-success">Оплачено</span>
+    {% elif status == 'Ожидает оплаты' %}
+        <span class="badge badge-warning text-dark">Ожидает оплаты</span>
+    {% elif status == 'Возврат от покупателя' %}
+        <span class="badge badge-danger">Возврат от покупателя</span>
+    {% else %}
+        <span class="badge badge-secondary">{{ status }}</span>
+    {% endif %}
+{% endmacro %}

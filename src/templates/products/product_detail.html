@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros.html" import product_status_badge, sale_status_badge %}
 {% block title %}{{ product.product_name }} — Комиссионный магазин{% endblock %}
 
 {% block content %}
@@ -10,15 +11,7 @@
         <p><strong>Дата доставки:</strong> {{ product.delivery_date }}</p>
         <p><strong>Срок реализации:</strong> {{ product.expiry_date }}</p>
         <p><strong>Цена:</strong> {{ product.price }} ₽</p>
-<p><strong>Статус:</strong>
-    {% if product.status == 'На витрине' %}
-        <span class="badge badge-success">На витрине</span>
-    {% elif product.status == 'Продан' %}
-        <span class="badge badge-primary">Продан</span>
-    {% else %}
-        <span class="badge badge-secondary">Возвращён комитенту</span>
-    {% endif %}
-</p>
+<p><strong>Статус:</strong> {{ product_status_badge(product.status) }}</p>
 
         {% if consignor_report %}
         <p>
@@ -100,7 +93,7 @@
             <td>{{ sale.sale_date }}</td>
             <td>{{ sale.sale_price }} ₽</td>
             <td>{{ sale.commission }} ₽</td>
-            <td>{{ sale.status }}</td>
+            <td>{{ sale_status_badge(sale.status) }}</td>
             <td>
                 <a href="{{ url_for('sale_detail', sale_id=sale.id, back='product') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-eye"></i>
