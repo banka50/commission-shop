@@ -43,7 +43,7 @@
     </div>
     <div class="form-group">
         <label for="sale_price">
-            Цена возврата:
+            <span id="price_label">Цена продажи:</span>
             <small id="price_hint" class="text-muted"></small>
         </label>
         <input type="number" step="0.01" id="sale_price" name="sale_price" class="form-control" required
@@ -95,7 +95,7 @@ const returnNotice = document.getElementById('return_notice');
 const priceLockHint = document.getElementById('price_locked_hint');
 const refundWrap = document.getElementById('refund_commission_wrap');
 const refundCheckbox = document.getElementById('refund_commission');
-const priceLabel = document.querySelector('label[for="sale_price"]').childNodes[0];
+const priceLabel = document.getElementById('price_label');
 
 {% if last_paid_sale %}
 const lastPrice = {{ last_paid_sale.sale_price | float }};
@@ -106,6 +106,7 @@ const lastCommission = null;
 {% endif %}
 
 function applyReturnMode(isReturn) {
+    priceLabel.textContent = isReturn ? 'Сумма возврата:' : 'Цена продажи:';
     if (isReturn) {
         returnNotice.style.display = '';
         priceLockHint.style.display = '';
