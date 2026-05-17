@@ -235,5 +235,17 @@
     <a href="{{ url_for('add_consignor_return', preset_consignor_id=consignor.id) }}" class="btn btn-outline-secondary">
         <i class="fas fa-undo mr-1"></i> Создать акт возврата
     </a>
+    {% if not consignor.consignor_reports %}
+    <button class="btn btn-danger btn-delete-modal"
+            data-action="{{ url_for('delete_consignor', consignor_id=consignor.id) }}"
+            data-message="Удалить комитента {{ consignor.last_name }} {{ consignor.first_name }}? Это действие необратимо.">
+        <i class="fas fa-trash-alt"></i> Удалить
+    </button>
+    {% else %}
+    <button class="btn btn-danger" disabled
+            data-toggle="tooltip" title="Нельзя удалить комитента с актами приёма">
+        <i class="fas fa-trash-alt"></i> Удалить
+    </button>
+    {% endif %}
 </div>
 {% endblock %}
