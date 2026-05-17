@@ -4,13 +4,69 @@
 
 {% block content %}
 <h1>Список продаж</h1>
-<a href="{{ url_for('add_sale') }}" class="btn btn-primary mb-3">
-    <i class="fas fa-plus"></i> Добавить продажу
-</a>
-<table class="table table-striped">
+
+{% if sales %}
+{% set paid    = sales | selectattr('status', 'eq', 'Оплачено') | list %}
+{% set pending = sales | selectattr('status', 'eq', 'Ожидает оплаты') | list %}
+{% set returns = sales | selectattr('status', 'eq', 'Возврат от покупателя') | list %}
+{% set total_revenue    = paid | sum(attribute='sale_price') %}
+{% set total_commission = paid | sum(attribute='commission') %}
+{% endif %}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-3" style="gap: 8px;">
+    <a href="{{ url_for('add_sale') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить продажу
+    </a>
+    <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+        <button class="btn btn-sm btn-outline-dark status-filter-btn active" data-status="">
+            Все <span class="badge badge-light ml-1">{{ sales | length }}</span>
+        </button>
+        <button class="btn btn-sm btn-outline-warning status-filter-btn" data-status="Ожидает оплаты">
+            Ожидает оплаты <span class="badge badge-warning ml-1">{{ pending | length }}</span>
+        </button>
+        <button class="btn btn-sm btn-outline-success status-filter-btn" data-status="Оплачено">
+            Оплачено <span class="badge badge-success ml-1">{{ paid | length }}</span>
+        </button>
+        <button class="btn btn-sm btn-outline-danger status-filter-btn" data-status="Возврат от покупателя">
+            Возврат <span class="badge badge-danger ml-1">{{ returns | length }}</span>
+        </button>
+    </div>
+</div>
+
+{% if sales %}
+<!-- Итоги по оплаченным продажам -->
+<div class="row mb-3">
+    <div class="col-md-4 col-sm-6 mb-2">
+        <div class="card border-left-success shadow-sm py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Выручка (оплачено)</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_revenue }} ₽</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6 mb-2">
+        <div class="card border-left-primary shadow-sm py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Комиссия (оплачено)</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_commission }} ₽</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6 mb-2">
+        <div class="card border-left-info shadow-sm py-2">
+            <div class="card-body py-1">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Всего продаж</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ sales | length }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<table id="salesTable" class="table table-striped table-hover">
     <thead>
         <tr>
             <th>Дата продажи</th>
+            <th>Товар</th>
             <th>Цена продажи</th>
             <th>Комиссия</th>
             <th>Статус</th>
@@ -20,7 +76,19 @@
     <tbody>
         {% for sale in sales %}
         <tr class="clickable-row" data-href="{{ url_for('sale_detail', sale_id=sale.id) }}">
-            <td>{{ sale.sale_date }}</td>
+            <td data-order="{{ sale.sale_date.strftime('%Y%m%d%H%M%S') }}">
+                {{ sale.sale_date.strftime('%d.%m.%Y %H:%M') }}
+            </td>
+            <td>
+                {% if sale.product %}
+                <a href="{{ url_for('product_detail', product_id=sale.product_id) }}"
+                   onclick="event.stopPropagation();">
+                    {{ sale.product.product_name }}
+                </a>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+            </td>
             <td>{{ sale.sale_price }} ₽</td>
             <td>{{ sale.commission }} ₽</td>
             <td>{{ sale_status_badge(sale.status) }}</td>
@@ -28,13 +96,15 @@
                 <div class="btn-group btn-group-sm" role="group">
                     <a href="{{ url_for('edit_sale', sale_id=sale.id, back='list') }}"
                        class="btn btn-outline-secondary"
-                       data-toggle="tooltip" title="Редактировать">
+                       data-toggle="tooltip" title="Редактировать"
+                       onclick="event.stopPropagation();">
                         <i class="fas fa-edit"></i>
                     </a>
                     <button class="btn btn-outline-danger btn-delete-modal"
                             data-action="{{ url_for('delete_sale', sale_id=sale.id) }}"
-                            data-message="Удалить эту продажу? Это действие необратимо."
-                            data-toggle="tooltip" title="Удалить">
+                            data-message="Удалить продажу товара «{{ sale.product.product_name if sale.product else '' }}»? Это действие необратимо."
+                            data-toggle="tooltip" title="Удалить"
+                            onclick="event.stopPropagation();">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
@@ -43,7 +113,7 @@
         {% endfor %}
     </tbody>
 </table>
-{% if not sales %}
+{% else %}
 <div class="empty-state">
     <i class="fas fa-shopping-bag d-block"></i>
     <p>Продаж пока нет</p>
@@ -51,5 +121,54 @@
         <i class="fas fa-plus"></i> Добавить продажу
     </a>
 </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if sales %}
+<script>
+    const DT_LANG = {
+        search: 'Поиск:',
+        lengthMenu: 'Показать _MENU_ записей',
+        info: 'Записи с _START_ по _END_ из _TOTAL_',
+        infoEmpty: 'Нет записей',
+        infoFiltered: '(отфильтровано из _MAX_)',
+        zeroRecords: 'Ничего не найдено',
+        paginate: {first: 'Первая', previous: 'Назад', next: 'Вперёд', last: 'Последняя'}
+    };
+
+    const table = $('#salesTable').DataTable({
+        stateSave: true,
+        language: DT_LANG,
+        order: [[0, 'desc']],
+        columnDefs: [
+            {targets: [5], orderable: false}
+        ],
+        dom: '<"d-flex justify-content-between align-items-center mb-2"lB>frtip',
+        buttons: [
+            {
+                extend: 'colvis',
+                text: '<i class="fas fa-columns"></i> Колонки',
+                className: 'btn btn-secondary btn-sm'
+            }
+        ]
+    });
+
+    $('.status-filter-btn').on('click', function() {
+        $('.status-filter-btn').removeClass('active');
+        $(this).addClass('active');
+        const status = $(this).data('status');
+        const val = status ? $.fn.dataTable.util.escapeRegex(status) : '';
+        table.column(4).search(val ? '^' + val + '$' : '', true, false).draw();
+    });
+
+    // Восстановить активную кнопку статуса
+    const savedStatus = table.column(4).search();
+    if (savedStatus) {
+        const statusVal = savedStatus.replace(/^\^/, '').replace(/\$$/, '');
+        $('.status-filter-btn').removeClass('active');
+        $('.status-filter-btn[data-status="' + statusVal + '"]').addClass('active');
+    }
+</script>
 {% endif %}
 {% endblock %}

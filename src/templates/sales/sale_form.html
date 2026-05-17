@@ -81,8 +81,8 @@
         <a href="{{ url_for('product_detail', product_id=preset_product.id) }}" class="btn btn-secondary">Отмена</a>
     {% elif request.args.get('back') == 'list' %}
         <a href="{{ url_for('sales_list') }}" class="btn btn-secondary">Отмена</a>
-    {% elif sale and sale.product %}
-        <a href="{{ url_for('product_detail', product_id=sale.product_id) }}" class="btn btn-secondary">Отмена</a>
+    {% elif sale %}
+        <a href="{{ url_for('sale_detail', sale_id=sale.id, back=request.args.get('back', '')) }}" class="btn btn-secondary">Отмена</a>
     {% else %}
         <a href="{{ url_for('sales_list') }}" class="btn btn-secondary">Отмена</a>
     {% endif %}

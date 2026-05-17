@@ -472,7 +472,7 @@ def delete_sales_report(sales_report_id):
 
 @app.route('/sales')
 def sales_list():
-    sales = Sale.query.all()
+    sales = Sale.query.order_by(Sale.sale_date.desc()).all()
 
     return render_template('sales/sales_list.html', sales=sales)
 
@@ -597,6 +597,11 @@ def edit_sale(sale_id):
         db.session.commit()
         flash('Данные обновлены!', 'success')
 
+        back = request.args.get('back', '')
+        if back == 'product' and sale.product:
+            return redirect(url_for('product_detail', product_id=sale.product_id))
+        if back == 'products_list':
+            return redirect(url_for('products_list'))
         return redirect(url_for('sales_list'))
 
     return render_template('sales/sale_form.html', sale=sale,
