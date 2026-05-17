@@ -725,12 +725,18 @@ def api_patch_product(product_id):
 def products_list():
     products = Product.query.all()
     consignor_reports = ConsignorReport.query.all()
-    consignor_reports_dict = {cr.id: cr.number for cr in consignor_reports}
+    consignor_reports_dict = {
+        cr.id: f'{cr.consignor.last_name} {cr.consignor.first_name} ({cr.number})'
+        for cr in consignor_reports
+    }
     categories = Category.query.order_by(Category.name).all()
+    from datetime import date as date_type
+    today = date_type.today()
 
     return render_template('products/products_list.html', products=products,
                            consignor_reports=consignor_reports_dict,
-                           categories=categories)
+                           categories=categories,
+                           today=today)
 
 
 @app.route('/add_product', methods=['GET', 'POST'])
