@@ -10,10 +10,28 @@ from config import Config
 
 from datetime import datetime
 from decimal import Decimal
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
+
+
+def _unique_error_message(err: IntegrityError) -> str:
+    """Возвращает понятное сообщение при нарушении уникальности."""
+    msg = str(err.orig).lower()
+    field_labels = {
+        'email': 'Email',
+        'phone_number': 'Номер телефона',
+        'passport_data': 'Паспортные данные',
+        'inn': 'ИНН',
+        'number': 'Номер',
+        'name': 'Название',
+    }
+    for field, label in field_labels.items():
+        if field in msg:
+            return f'{label} уже занят — введите другое значение.'
+    return 'Запись с такими данными уже существует.'
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -182,9 +200,13 @@ def add_consignor():
             inn=inn
         )
         db.session.add(new_consignor)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(_unique_error_message(e), 'danger')
+            return render_template('consignors/consignor_form.html', consignor=None)
         flash('Комитент успешно добавлен!', 'success')
-
         return redirect(url_for('consignors_list'))
 
     return render_template('consignors/consignor_form.html', consignor=None)
@@ -209,9 +231,13 @@ def edit_consignor(consignor_id):
         consignor.phone_number = request.form['phone_number']
         consignor.passport_data = request.form['passport_data']
         consignor.inn = request.form['INN']
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(_unique_error_message(e), 'danger')
+            return render_template('consignors/consignor_form.html', consignor=consignor)
         flash('Данные обновлены!', 'success')
-
         return redirect(url_for('consignors_list'))
 
     return render_template('consignors/consignor_form.html', consignor=consignor)
@@ -270,9 +296,14 @@ def add_consignor_report():
             commission_min=commission_min,
         )
         db.session.add(new_report)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(_unique_error_message(e), 'danger')
+            return render_template('consignor_reports/consignor_report_form.html',
+                                   consignor_report=None, consignors=consignors)
         flash('Акт приёма успешно добавлен!', 'success')
-
         return redirect(url_for('consignor_reports_list'))
 
     return render_template('consignor_reports/consignor_report_form.html',
@@ -300,9 +331,14 @@ def edit_consignor_report(consignor_report_id):
         consignor_report.consignor_id = request.form['consignor_id']
         consignor_report.commission_pct = Decimal(request.form['commission_pct'])
         consignor_report.commission_min = Decimal(request.form['commission_min'])
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(_unique_error_message(e), 'danger')
+            return render_template('consignor_reports/consignor_report_form.html',
+                                   consignor_report=consignor_report, consignors=consignors)
         flash('Данные обновлены!', 'success')
-
         return redirect(url_for('consignor_reports_list'))
 
     return render_template('consignor_reports/consignor_report_form.html',
@@ -383,7 +419,12 @@ def add_sales_report():
             )
             db.session.add(line)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(_unique_error_message(e), 'danger')
+            return render_template('sales_reports/sales_report_form.html', sales_report=None)
         flash('Отчёт сформирован!', 'success')
         return redirect(url_for('sales_report_detail', sales_report_id=report.id))
 
@@ -592,7 +633,12 @@ def add_category():
         name = request.form['name'].strip()
         description = request.form.get('description', '').strip() or None
         db.session.add(Category(name=name, description=description))
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(_unique_error_message(e), 'danger')
+            return render_template('categories/category_form.html', category=None)
         flash('Категория добавлена!', 'success')
         return redirect(url_for('categories_list'))
     return render_template('categories/category_form.html', category=None)
@@ -604,7 +650,12 @@ def edit_category(category_id):
     if request.method == 'POST':
         category.name = request.form['name'].strip()
         category.description = request.form.get('description', '').strip() or None
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(_unique_error_message(e), 'danger')
+            return render_template('categories/category_form.html', category=category)
         flash('Категория обновлена!', 'success')
         return redirect(url_for('categories_list'))
     return render_template('categories/category_form.html', category=category)
@@ -805,7 +856,13 @@ def add_consignor_return():
             consignor_id=consignor_id,
         )
         db.session.add(new_return)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(_unique_error_message(e), 'danger')
+            return render_template('consignor_returns/consignor_return_form.html',
+                                   ret=None, consignors=consignors)
         flash('Акт возврата создан!', 'success')
         return redirect(url_for('edit_consignor_return', return_id=new_return.id))
 
@@ -835,7 +892,18 @@ def edit_consignor_return(return_id):
         ret.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
         ret.description = request.form.get('description', '').strip() or None
         ret.consignor_id = int(request.form['consignor_id'])
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            flash(_unique_error_message(e), 'danger')
+            available_products = Product.query.filter(
+                Product.consignor_report.has(consignor_id=ret.consignor_id),
+                Product.status.in_(['На витрине', 'Возвращён комитенту']),
+            ).all()
+            return render_template('consignor_returns/consignor_return_form.html',
+                                   ret=ret, consignors=consignors,
+                                   available_products=available_products)
         flash('Акт возврата обновлён!', 'success')
         return redirect(url_for('edit_consignor_return', return_id=ret.id))
 
