@@ -85,13 +85,13 @@ def inject_breadcrumbs():
         # Третий уровень — название конкретной записи
         detail_label = None
         if endpoint == 'consignor_detail':
-            c = Consignor.query.get(args.get('consignor_id'))
+            c = db.session.get(Consignor, args.get('consignor_id'))
             if c:
                 detail_label = f'{c.last_name} {c.first_name}'
         elif endpoint in ('add_consignor', 'edit_consignor'):
             detail_label = 'Редактировать' if 'consignor_id' in args else 'Добавить'
         elif endpoint == 'product_detail':
-            p = Product.query.get(args.get('product_id'))
+            p = db.session.get(Product, args.get('product_id'))
             if p:
                 detail_label = p.product_name
         elif endpoint in ('add_product', 'edit_product'):
@@ -103,19 +103,19 @@ def inject_breadcrumbs():
         elif endpoint in ('add_category', 'edit_category'):
             detail_label = 'Редактировать' if 'category_id' in args else 'Добавить'
         elif endpoint == 'consignor_report_detail':
-            cr = ConsignorReport.query.get(args.get('consignor_report_id'))
+            cr = db.session.get(ConsignorReport, args.get('consignor_report_id'))
             if cr:
                 detail_label = f'Акт № {cr.number}'
         elif endpoint in ('add_consignor_report', 'edit_consignor_report'):
             detail_label = 'Редактировать' if 'consignor_report_id' in args else 'Добавить'
         elif endpoint in ('consignor_return_detail', 'edit_consignor_return'):
-            ret = ConsignorReturn.query.get(args.get('return_id'))
+            ret = db.session.get(ConsignorReturn, args.get('return_id'))
             if ret:
                 detail_label = f'Акт № {ret.number}'
         elif endpoint == 'add_consignor_return':
             detail_label = 'Новый акт'
         elif endpoint == 'sales_report_detail':
-            sr = SalesReport.query.get(args.get('sales_report_id'))
+            sr = db.session.get(SalesReport, args.get('sales_report_id'))
             if sr:
                 detail_label = f'Отчёт № {sr.number}'
         elif endpoint in ('add_sales_report', 'edit_sales_report'):
@@ -493,7 +493,7 @@ def _update_product_status(product: Product) -> None:
 def add_sale():
     products = Product.query.all()
     preset_product_id = request.args.get('product_id', type=int)
-    preset_product = Product.query.get(preset_product_id) if preset_product_id else None
+    preset_product = db.session.get(Product, preset_product_id) if preset_product_id else None
 
     # Последняя оплаченная продажа товара — для автоподстановки сторно
     last_paid_sale = None
@@ -703,7 +703,7 @@ def api_patch_product(product_id):
         if value == '' or value is None:
             product.category_id = None
         else:
-            cat = Category.query.get(int(value))
+            cat = db.session.get(Category, int(value))
             if not cat:
                 return jsonify(error='Категория не найдена.'), 404
             product.category_id = cat.id
@@ -744,7 +744,7 @@ def add_product():
     consignor_reports = ConsignorReport.query.all()
     categories = Category.query.order_by(Category.name).all()
     preset_cr_id = request.args.get('consignor_report_id', type=int)
-    preset_cr = ConsignorReport.query.get(preset_cr_id) if preset_cr_id else None
+    preset_cr = db.session.get(ConsignorReport, preset_cr_id) if preset_cr_id else None
 
     if request.method == 'POST':
         product_name = request.form['product_name']
@@ -808,7 +808,7 @@ def edit_product(product_id):
         # Удалить отмеченные фотографии
         ids_to_delete = request.form.getlist('delete_image_ids')
         for image_id in ids_to_delete:
-            img = ProductImage.query.get(int(image_id))
+            img = db.session.get(ProductImage, int(image_id))
             if img and img.product_id == product.id:
                 img_path = os.path.join(app.config['UPLOAD_FOLDER'], img.filename)
                 if os.path.exists(img_path):
