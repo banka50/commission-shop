@@ -15,6 +15,10 @@
     <a href="{{ url_for('consignor_return_detail', return_id=request.args.get('return_id')) }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к акту возврата
     </a>
+    {% elif request.args.get('back') == 'consignor_report' and request.args.get('report_id') %}
+    <a href="{{ url_for('consignor_report_detail', consignor_report_id=request.args.get('report_id')) }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к акту приёма
+    </a>
     {% else %}
     <a href="{{ url_for('consignors_list') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к комитентам

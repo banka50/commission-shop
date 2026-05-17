@@ -9,7 +9,11 @@
 <p><strong>Описание:</strong> {{ consignor_report.description }}</p>
 <p><strong>Комиссия:</strong> {{ consignor_report.commission_pct }} % (не менее {{ consignor_report.commission_min }} ₽)</p>
 {% if consignor %}
-    <p><strong>Комитент:</strong> {{ consignor.last_name }} {{ consignor.first_name }} {{ consignor.middle_name or '' }}</p>
+    <p><strong>Комитент:</strong>
+        <a href="{{ url_for('consignor_detail', consignor_id=consignor.id, back='consignor_report', report_id=consignor_report.id) }}">
+            {{ consignor.last_name }} {{ consignor.first_name }} {{ consignor.middle_name or '' }}
+        </a>
+    </p>
 {% endif %}
 
 {% if consignor_report.products %}
@@ -50,9 +54,6 @@
 {% endif %}
 
 <div class="mt-3">
-    <a href="{{ url_for('consignor_detail', consignor_id=consignor.id) }}" class="btn btn-primary">
-        <i class="fas fa-user"></i> Перейти к комитенту
-    </a>
     <a href="{{ url_for('consignor_reports_list') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к актам приёма
     </a>

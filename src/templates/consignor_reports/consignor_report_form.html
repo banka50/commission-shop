@@ -20,16 +20,27 @@
         <textarea id="description" name="description" class="form-control" required>{{ consignor_report.description if consignor_report else '' }}</textarea>
     </div>
     <div class="form-group">
-        <label for="consignor_id">Комитент:</label>
+        <label>Комитент:</label>
+        {% if consignor_report %}
+        <p class="form-control-plaintext font-weight-bold">
+            <a href="{{ url_for('consignor_detail', consignor_id=consignor_report.consignor_id) }}">
+                <i class="fas fa-user mr-1 text-muted"></i>
+                {{ consignor_report.consignor.last_name }} {{ consignor_report.consignor.first_name }}
+                {% if consignor_report.consignor.middle_name and consignor_report.consignor.middle_name != 'Отсутствует' %}
+                    {{ consignor_report.consignor.middle_name }}
+                {% endif %}
+            </a>
+        </p>
+        {% else %}
         <select id="consignor_id" name="consignor_id" class="form-control" required>
             <option value="">Выбрать комитента</option>
             {% for consignor in consignors %}
-                <option value="{{ consignor.id }}"
-                        {% if consignor_report and consignor_report.consignor_id == consignor.id %}selected{% endif %}>
+                <option value="{{ consignor.id }}">
                     {{ consignor.last_name }} {{ consignor.first_name }} {{ consignor.middle_name|default('') }}
                 </option>
             {% endfor %}
         </select>
+        {% endif %}
     </div>
     <div class="form-row">
         <div class="form-group col-md-4">

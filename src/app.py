@@ -328,7 +328,6 @@ def edit_consignor_report(consignor_report_id):
         consignor_report.number = request.form['number']
         consignor_report.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
         consignor_report.description = request.form['description']
-        consignor_report.consignor_id = request.form['consignor_id']
         consignor_report.commission_pct = Decimal(request.form['commission_pct'])
         consignor_report.commission_min = Decimal(request.form['commission_min'])
         try:
