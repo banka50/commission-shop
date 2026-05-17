@@ -2,40 +2,54 @@
 {% block title %}Акты возврата — Комиссионный магазин{% endblock %}
 
 {% block content %}
-<h1>Акты возврата комитентам</h1>
-<a href="{{ url_for('add_consignor_return') }}" class="btn btn-primary mb-3">
-    <i class="fas fa-plus"></i> Создать акт возврата
-</a>
-<table class="table table-striped">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Акты возврата комитентам</h1>
+    <a href="{{ url_for('add_consignor_return') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Создать акт
+    </a>
+</div>
+
+{% if returns %}
+<table id="consignorReturnsTable" class="table table-striped table-hover">
     <thead>
         <tr>
             <th>Номер</th>
             <th>Дата</th>
             <th>Комитент</th>
-            <th>Товаров</th>
+            <th class="text-center">Товаров</th>
             <th>Описание</th>
             <th>Действия</th>
         </tr>
     </thead>
     <tbody>
         {% for ret in returns %}
-        <tr class="clickable-row" data-href="{{ url_for('edit_consignor_return', return_id=ret.id) }}">
-            <td>{{ ret.number }}</td>
-            <td>{{ ret.date }}</td>
+        <tr class="clickable-row" data-href="{{ url_for('consignor_return_detail', return_id=ret.id) }}" style="cursor:pointer;">
+            <td class="font-weight-bold">{{ ret.number }}</td>
+            <td data-order="{{ ret.date.strftime('%Y%m%d') }}">{{ ret.date.strftime('%d.%m.%Y') }}</td>
             <td>{{ ret.consignor.last_name }} {{ ret.consignor.first_name }}</td>
-            <td>{{ ret.products | length }}</td>
-            <td>{{ ret.description or '' }}</td>
+            <td class="text-center">
+                <span class="badge badge-secondary">{{ ret.products | length }}</span>
+            </td>
+            <td>{{ ret.description or '—' }}</td>
             <td>
                 <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ url_for('consignor_return_detail', return_id=ret.id) }}"
+                       class="btn btn-outline-primary"
+                       data-toggle="tooltip" title="Просмотр"
+                       onclick="event.stopPropagation();">
+                        <i class="fas fa-eye"></i>
+                    </a>
                     <a href="{{ url_for('edit_consignor_return', return_id=ret.id) }}"
                        class="btn btn-outline-secondary"
-                       data-toggle="tooltip" title="Редактировать">
+                       data-toggle="tooltip" title="Редактировать"
+                       onclick="event.stopPropagation();">
                         <i class="fas fa-edit"></i>
                     </a>
                     <button class="btn btn-outline-danger btn-delete-modal"
                             data-action="{{ url_for('delete_consignor_return', return_id=ret.id) }}"
                             data-message="Удалить акт возврата № {{ ret.number }}? Все товары вернутся на витрину."
-                            data-toggle="tooltip" title="Удалить">
+                            data-toggle="tooltip" title="Удалить"
+                            onclick="event.stopPropagation();">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
@@ -44,7 +58,7 @@
         {% endfor %}
     </tbody>
 </table>
-{% if not returns %}
+{% else %}
 <div class="empty-state">
     <i class="fas fa-undo d-block"></i>
     <p>Актов возврата пока нет</p>
@@ -52,5 +66,22 @@
         <i class="fas fa-plus"></i> Создать акт возврата
     </a>
 </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if returns %}
+<script>
+$('#consignorReturnsTable').DataTable({
+    language: {
+        search: 'Поиск:', lengthMenu: 'Показать _MENU_',
+        info: '_START_–_END_ из _TOTAL_', infoEmpty: '0 записей',
+        zeroRecords: 'Ничего не найдено',
+        paginate: {first: '«', previous: '‹', next: '›', last: '»'}
+    },
+    order: [[1, 'desc']],
+    columnDefs: [{targets: [5], orderable: false}]
+});
+</script>
 {% endif %}
 {% endblock %}

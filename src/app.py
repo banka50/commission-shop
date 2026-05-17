@@ -177,7 +177,7 @@ def index():
 
 @app.route('/consignors')
 def consignors_list():
-    consignors = Consignor.query.all()
+    consignors = Consignor.query.order_by(Consignor.last_name).all()
 
     return render_template('consignors/consignors_list.html', consignors=consignors)
 
@@ -659,6 +659,20 @@ def add_sale():
     return render_template('sales/sale_form.html', sale=None,
                            products=products, preset_product=preset_product,
                            last_paid_sale=last_paid_sale,
+                           commission_data={
+                               p.id: {
+                                   'pct': float(p.consignor_report.commission_pct),
+                                   'min': float(p.consignor_report.commission_min),
+                               }
+                               for p in products if p.consignor_report
+                           },
+                           preset_commission=(
+                               {
+                                   'pct': float(preset_product.consignor_report.commission_pct),
+                                   'min': float(preset_product.consignor_report.commission_min),
+                               }
+                               if preset_product and preset_product.consignor_report else None
+                           ),
                            now=datetime.now())
 
 
