@@ -44,6 +44,9 @@
             cursor: pointer;
             position: relative;
         }
+        tr.clickable-row {
+            cursor: pointer;
+        }
         .editable-cell:hover {
             background-color: #fff9e6 !important;
         }
@@ -235,6 +238,12 @@
 
             // Тултипы
             $('[data-toggle="tooltip"]').tooltip({boundary: 'window'});
+
+            // Кликабельные строки таблиц
+            $(document).on('click', 'tr.clickable-row', function(e) {
+                if ($(e.target).closest('.btn-group, button, a').length) return;
+                window.location.href = $(this).data('href');
+            });
         });
     </script>
     {% block scripts %}{% endblock %}

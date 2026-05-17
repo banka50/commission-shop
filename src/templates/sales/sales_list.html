@@ -19,18 +19,13 @@
     </thead>
     <tbody>
         {% for sale in sales %}
-        <tr>
+        <tr class="clickable-row" data-href="{{ url_for('sale_detail', sale_id=sale.id) }}">
             <td>{{ sale.sale_date }}</td>
             <td>{{ sale.sale_price }} ₽</td>
             <td>{{ sale.commission }} ₽</td>
             <td>{{ sale_status_badge(sale.status) }}</td>
             <td>
                 <div class="btn-group btn-group-sm" role="group">
-                    <a href="{{ url_for('sale_detail', sale_id=sale.id) }}"
-                       class="btn btn-outline-primary"
-                       data-toggle="tooltip" title="Показать">
-                        <i class="fas fa-eye"></i>
-                    </a>
                     <a href="{{ url_for('edit_sale', sale_id=sale.id, back='list') }}"
                        class="btn btn-outline-secondary"
                        data-toggle="tooltip" title="Редактировать">

@@ -18,7 +18,7 @@
     </thead>
     <tbody>
         {% for report in reports %}
-        <tr>
+        <tr class="clickable-row" data-href="{{ url_for('report_detail', report_id=report.id) }}">
             <td>{{ report.number }}</td>
             <td>{{ report.date }}</td>
             <td>{{ report.report_type }}</td>
@@ -26,11 +26,6 @@
             <td>{{ consignors[report.consignor_id] }}</td>
             <td>
                 <div class="btn-group btn-group-sm" role="group">
-                    <a href="{{ url_for('report_detail', report_id=report.id) }}"
-                       class="btn btn-outline-primary"
-                       data-toggle="tooltip" title="Показать">
-                        <i class="fas fa-eye"></i>
-                    </a>
                     <a href="{{ url_for('edit_report', report_id=report.id) }}"
                        class="btn btn-outline-secondary"
                        data-toggle="tooltip" title="Редактировать">

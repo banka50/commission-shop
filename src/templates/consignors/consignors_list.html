@@ -22,7 +22,7 @@
     <tbody>
         {% if consignors %}
         {% for consignor in consignors %}
-        <tr>
+        <tr class="clickable-row" data-href="{{ url_for('consignor_detail', consignor_id=consignor.id) }}">
             <td>{{ consignor.last_name }}</td>
             <td>{{ consignor.first_name }}</td>
             <td>{{ consignor.middle_name }}</td>
@@ -32,11 +32,6 @@
             <td>{{ consignor.inn }}</td>
             <td>
                 <div class="btn-group btn-group-sm" role="group">
-                    <a href="{{ url_for('consignor_detail', consignor_id=consignor.id) }}"
-                       class="btn btn-outline-primary"
-                       data-toggle="tooltip" title="Показать">
-                        <i class="fas fa-eye"></i>
-                    </a>
                     <a href="{{ url_for('edit_consignor', consignor_id=consignor.id) }}"
                        class="btn btn-outline-secondary"
                        data-toggle="tooltip" title="Редактировать">
