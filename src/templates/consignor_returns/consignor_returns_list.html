@@ -42,4 +42,13 @@
         {% endfor %}
     </tbody>
 </table>
+{% if not returns %}
+<div class="empty-state">
+    <i class="fas fa-undo d-block"></i>
+    <p>Актов возврата пока нет</p>
+    <a href="{{ url_for('add_consignor_return') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Создать акт возврата
+    </a>
+</div>
+{% endif %}
 {% endblock %}

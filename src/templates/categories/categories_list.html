@@ -35,4 +35,13 @@
         {% endfor %}
     </tbody>
 </table>
+{% if not categories %}
+<div class="empty-state">
+    <i class="fas fa-tags d-block"></i>
+    <p>Категорий пока нет</p>
+    <a href="{{ url_for('add_category') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить категорию
+    </a>
+</div>
+{% endif %}
 {% endblock %}

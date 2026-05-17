@@ -102,6 +102,12 @@
         {% endfor %}
     </tbody>
 </table>
+{% if not products %}
+<div class="empty-state">
+    <i class="fas fa-box-open d-block"></i>
+    <p>Товаров пока нет</p>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

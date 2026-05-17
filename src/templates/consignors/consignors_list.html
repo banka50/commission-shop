@@ -20,6 +20,7 @@
         </tr>
     </thead>
     <tbody>
+        {% if consignors %}
         {% for consignor in consignors %}
         <tr>
             <td>{{ consignor.last_name }}</td>
@@ -44,6 +45,16 @@
             </td>
         </tr>
         {% endfor %}
+        {% endif %}
     </tbody>
 </table>
+{% if not consignors %}
+<div class="empty-state">
+    <i class="fas fa-user-friends d-block"></i>
+    <p>Комитентов пока нет</p>
+    <a href="{{ url_for('add_consignor') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить комитента
+    </a>
+</div>
+{% endif %}
 {% endblock %}
