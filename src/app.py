@@ -1098,20 +1098,13 @@ def add_consignor_return():
 @app.route('/consignor_returns/<int:return_id>')
 def consignor_return_detail(return_id):
     ret = ConsignorReturn.query.get_or_404(return_id)
-    from sqlalchemy import or_, and_
-    # Товары этого комитента, которые либо на витрине, либо уже в этом конкретном акте
-    available_products = Product.query.filter(
+    # Товары этого комитента «На витрине» — их можно добавить в акт
+    addable_products = Product.query.filter(
         Product.consignor_report.has(consignor_id=ret.consignor_id),
-        or_(
-            Product.status == 'На витрине',
-            and_(
-                Product.status == 'Возвращён комитенту',
-                Product.consignor_return_id == ret.id,
-            )
-        )
-    ).all()
+        Product.status == 'На витрине',
+    ).order_by(Product.product_name).all()
     return render_template('consignor_returns/consignor_return_detail.html',
-                           ret=ret, available_products=available_products)
+                           ret=ret, addable_products=addable_products)
 
 
 @app.route('/edit_consignor_return/<int:return_id>', methods=['GET', 'POST'])

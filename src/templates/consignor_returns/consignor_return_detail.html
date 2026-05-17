@@ -116,21 +116,23 @@
 <p class="text-muted">Товары ещё не добавлены.</p>
 {% endif %}
 
-{% if available_products %}
+{% if addable_products %}
 <h5 class="mt-3 no-print">Добавить товар в акт</h5>
 <form action="{{ url_for('add_product_to_return', return_id=ret.id) }}" method="POST" class="form-inline no-print">
     <select name="product_id" class="form-control mr-2" required>
         <option value="">Выбрать товар</option>
-        {% for p in available_products %}
-            {% if p.consignor_return_id != ret.id %}
-            <option value="{{ p.id }}">{{ p.product_name }} — {{ p.price }} ₽ ({{ p.consignor_report.number }})</option>
-            {% endif %}
+        {% for p in addable_products %}
+        <option value="{{ p.id }}">{{ p.product_name }} — {{ p.price }} ₽ ({{ p.consignor_report.number }})</option>
         {% endfor %}
     </select>
     <button type="submit" class="btn btn-success">
         <i class="fas fa-plus"></i> Добавить
     </button>
 </form>
+{% elif not ret.products %}
+<p class="text-muted no-print"><i class="fas fa-info-circle mr-1"></i>У комитента нет товаров на витрине.</p>
+{% else %}
+<p class="text-muted no-print"><i class="fas fa-check-circle mr-1 text-success"></i>Все товары комитента уже включены в акт.</p>
 {% endif %}
 
 {% endblock %}
