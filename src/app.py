@@ -396,6 +396,29 @@ def add_sale():
             if commission > 0:
                 commission = -commission
 
+            # Проверяем совпадение суммы возврата с исходной продажей
+            orig_sale = (
+                Sale.query
+                .filter_by(product_id=product_id, status='Оплачено')
+                .order_by(Sale.sale_date.desc())
+                .first()
+            )
+            if orig_sale:
+                if abs(sale_price) != abs(orig_sale.sale_price):
+                    flash(
+                        f'Сумма возврата ({abs(sale_price)} ₽) должна совпадать '
+                        f'с суммой исходной продажи ({abs(orig_sale.sale_price)} ₽).',
+                        'danger'
+                    )
+                    return redirect(request.url)
+                max_commission_refund = abs(orig_sale.commission)
+                if commission < -max_commission_refund or commission > 0:
+                    flash(
+                        f'Возврат комиссии должен быть от 0 до {max_commission_refund} ₽.',
+                        'danger'
+                    )
+                    return redirect(request.url)
+
         new_sale = Sale(
             sale_date=sale_date,
             sale_price=sale_price,
