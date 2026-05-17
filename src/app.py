@@ -934,7 +934,6 @@ def edit_consignor_return(return_id):
         ret.number = request.form['number']
         ret.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
         ret.description = request.form.get('description', '').strip() or None
-        ret.consignor_id = int(request.form['consignor_id'])
         try:
             db.session.commit()
         except IntegrityError as e:
