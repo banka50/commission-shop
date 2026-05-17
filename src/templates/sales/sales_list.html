@@ -34,13 +34,32 @@
 </div>
 
 {% if sales %}
-<!-- Итоги по оплаченным продажам -->
+<!-- Фильтр по периоду -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center flex-wrap" style="gap: 6px;">
+            <span class="text-muted small font-weight-bold mr-1"><i class="fas fa-calendar-alt mr-1"></i>Период:</span>
+            <button class="btn btn-sm btn-outline-secondary period-btn" data-period="today">Сегодня</button>
+            <button class="btn btn-sm btn-outline-secondary period-btn" data-period="week">Эта неделя</button>
+            <button class="btn btn-sm btn-outline-secondary period-btn" data-period="month">Этот месяц</button>
+            <button class="btn btn-sm btn-outline-secondary period-btn" data-period="prev_month">Прошлый месяц</button>
+            <button class="btn btn-sm btn-outline-secondary period-btn active" data-period="all">Всё время</button>
+            <span class="text-muted small mx-1">|</span>
+            <input type="date" id="date-from" class="form-control form-control-sm" style="width:145px;" placeholder="с">
+            <span class="text-muted">—</span>
+            <input type="date" id="date-to" class="form-control form-control-sm" style="width:145px;" placeholder="по">
+        </div>
+    </div>
+</div>
+
+<!-- Итоги (пересчитываются по фильтру) -->
 <div class="row mb-3">
     <div class="col-md-4 col-sm-6 mb-2">
         <div class="card border-left-success shadow-sm py-2">
             <div class="card-body py-1">
                 <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Выручка (оплачено)</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_revenue }} ₽</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800" id="kpi-revenue">{{ total_revenue }} ₽</div>
+                <small class="text-muted" id="kpi-revenue-label"></small>
             </div>
         </div>
     </div>
@@ -48,15 +67,15 @@
         <div class="card border-left-primary shadow-sm py-2">
             <div class="card-body py-1">
                 <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Комиссия (оплачено)</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_commission }} ₽</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800" id="kpi-commission">{{ total_commission }} ₽</div>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-sm-6 mb-2">
         <div class="card border-left-info shadow-sm py-2">
             <div class="card-body py-1">
-                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Всего продаж</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ sales | length }}</div>
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Показано продаж</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800" id="kpi-count">{{ sales | length }}</div>
             </div>
         </div>
     </div>
@@ -89,9 +108,9 @@
                 <span class="text-muted">—</span>
                 {% endif %}
             </td>
-            <td>{{ sale.sale_price }} ₽</td>
-            <td>{{ sale.commission }} ₽</td>
-            <td>{{ sale_status_badge(sale.status) }}</td>
+            <td data-price="{{ sale.sale_price }}">{{ sale.sale_price }} ₽</td>
+            <td data-commission="{{ sale.commission }}">{{ sale.commission }} ₽</td>
+            <td data-status="{{ sale.status }}">{{ sale_status_badge(sale.status) }}</td>
             <td>
                 <div class="btn-group btn-group-sm" role="group">
                     <a href="{{ url_for('edit_sale', sale_id=sale.id, back='list') }}"
@@ -126,48 +145,131 @@
 {% block scripts %}
 {% if sales %}
 <script>
-    const DT_LANG = {
-        search: 'Поиск:',
-        lengthMenu: 'Показать _MENU_ записей',
-        info: 'Записи с _START_ по _END_ из _TOTAL_',
-        infoEmpty: 'Нет записей',
-        infoFiltered: '(отфильтровано из _MAX_)',
-        zeroRecords: 'Ничего не найдено',
-        paginate: {first: 'Первая', previous: 'Назад', next: 'Вперёд', last: 'Последняя'}
-    };
+const DT_LANG = {
+    search: 'Поиск:',
+    lengthMenu: 'Показать _MENU_ записей',
+    info: 'Записи с _START_ по _END_ из _TOTAL_',
+    infoEmpty: 'Нет записей',
+    infoFiltered: '(отфильтровано из _MAX_)',
+    zeroRecords: 'Ничего не найдено',
+    paginate: {first: 'Первая', previous: 'Назад', next: 'Вперёд', last: 'Последняя'}
+};
 
-    const table = $('#salesTable').DataTable({
-        stateSave: true,
-        language: DT_LANG,
-        order: [[0, 'desc']],
-        columnDefs: [
-            {targets: [5], orderable: false}
-        ],
-        dom: '<"d-flex justify-content-between align-items-center mb-2"lB>frtip',
-        buttons: [
-            {
-                extend: 'colvis',
-                text: '<i class="fas fa-columns"></i> Колонки',
-                className: 'btn btn-secondary btn-sm'
-            }
-        ]
-    });
+// Кастомный фильтр по диапазону дат (колонка 0, формат DD.MM.YYYY HH:MM)
+function parseDMY(str) {
+    const p = str.trim().split(' ')[0].split('.');
+    return new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+}
 
-    $('.status-filter-btn').on('click', function() {
-        $('.status-filter-btn').removeClass('active');
-        $(this).addClass('active');
-        const status = $(this).data('status');
-        const val = status ? $.fn.dataTable.util.escapeRegex(status) : '';
-        table.column(4).search(val ? '^' + val + '$' : '', true, false).draw();
-    });
-
-    // Восстановить активную кнопку статуса
-    const savedStatus = table.column(4).search();
-    if (savedStatus) {
-        const statusVal = savedStatus.replace(/^\^/, '').replace(/\$$/, '');
-        $('.status-filter-btn').removeClass('active');
-        $('.status-filter-btn[data-status="' + statusVal + '"]').addClass('active');
+$.fn.dataTable.ext.search.push(function(settings, data) {
+    if (settings.nTable.id !== 'salesTable') return true;
+    const from = document.getElementById('date-from').value;
+    const to   = document.getElementById('date-to').value;
+    if (!from && !to) return true;
+    const cellDate = parseDMY(data[0]);
+    if (from && cellDate < new Date(from)) return false;
+    if (to) {
+        const toDate = new Date(to);
+        toDate.setHours(23, 59, 59, 999);
+        if (cellDate > toDate) return false;
     }
+    return true;
+});
+
+const table = $('#salesTable').DataTable({
+    stateSave: true,
+    language: DT_LANG,
+    order: [[0, 'desc']],
+    columnDefs: [
+        {targets: [5], orderable: false}
+    ],
+    dom: '<"d-flex justify-content-between align-items-center mb-2"lB>frtip',
+    buttons: [
+        {
+            extend: 'colvis',
+            text: '<i class="fas fa-columns"></i> Колонки',
+            className: 'btn btn-secondary btn-sm'
+        }
+    ]
+});
+
+// Пересчёт KPI по видимым строкам
+function updateKPIs() {
+    let revenue = 0, commission = 0, count = 0;
+    table.rows({search: 'applied'}).nodes().each(function(node) {
+        const cells = node.cells;
+        const status = cells[4].getAttribute('data-status');
+        const price  = parseFloat(cells[2].getAttribute('data-price')) || 0;
+        const comm   = parseFloat(cells[3].getAttribute('data-commission')) || 0;
+        count++;
+        if (status === 'Оплачено') {
+            revenue += price;
+            commission += comm;
+        }
+    });
+    $('#kpi-revenue').text(revenue.toFixed(2) + ' ₽');
+    $('#kpi-commission').text(commission.toFixed(2) + ' ₽');
+    $('#kpi-count').text(count);
+}
+
+table.on('draw', updateKPIs);
+updateKPIs();
+
+// Кнопки статуса
+$('.status-filter-btn').on('click', function() {
+    $('.status-filter-btn').removeClass('active');
+    $(this).addClass('active');
+    const status = $(this).data('status');
+    const val = status ? $.fn.dataTable.util.escapeRegex(status) : '';
+    table.column(4).search(val ? '^' + val + '$' : '', true, false).draw();
+});
+
+// Восстановить активную кнопку статуса
+const savedStatus = table.column(4).search();
+if (savedStatus) {
+    const statusVal = savedStatus.replace(/^\^/, '').replace(/\$$/, '');
+    $('.status-filter-btn').removeClass('active');
+    $('.status-filter-btn[data-status="' + statusVal + '"]').addClass('active');
+}
+
+// Кнопки периода
+function isoDate(d) {
+    return d.toISOString().slice(0, 10);
+}
+
+$('.period-btn').on('click', function() {
+    $('.period-btn').removeClass('active');
+    $(this).addClass('active');
+    const period = $(this).data('period');
+    const now = new Date();
+    let from = '', to = '';
+
+    if (period === 'today') {
+        from = to = isoDate(now);
+    } else if (period === 'week') {
+        const day = now.getDay() || 7;
+        const mon = new Date(now);
+        mon.setDate(now.getDate() - day + 1);
+        from = isoDate(mon);
+        to   = isoDate(now);
+    } else if (period === 'month') {
+        from = isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+        to   = isoDate(now);
+    } else if (period === 'prev_month') {
+        from = isoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+        to   = isoDate(new Date(now.getFullYear(), now.getMonth(), 0));
+    }
+    // 'all' — from/to остаются пустыми
+    document.getElementById('date-from').value = from;
+    document.getElementById('date-to').value   = to;
+    table.draw();
+});
+
+// Ручной ввод диапазона снимает активный период
+$('#date-from, #date-to').on('change', function() {
+    $('.period-btn').removeClass('active');
+    table.draw();
+});
 </script>
 {% endif %}
 {% endblock %}
