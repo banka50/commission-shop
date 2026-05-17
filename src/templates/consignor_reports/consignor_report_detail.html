@@ -3,46 +3,91 @@
 {% block title %}Акт приёма № {{ consignor_report.number }} — Комиссионный магазин{% endblock %}
 
 {% block content %}
-<h1>Акт приёма товаров</h1>
-<p><strong>Номер:</strong> {{ consignor_report.number }}</p>
-<p><strong>Дата:</strong> {{ consignor_report.date }}</p>
-<p><strong>Описание:</strong> {{ consignor_report.description }}</p>
-<p><strong>Комиссия:</strong> {{ consignor_report.commission_pct }} % (не менее {{ consignor_report.commission_min }} ₽)</p>
-{% if consignor %}
-    <p><strong>Комитент:</strong>
-        <a href="{{ url_for('consignor_detail', consignor_id=consignor.id, back='consignor_report', report_id=consignor_report.id) }}">
-            {{ consignor.last_name }} {{ consignor.first_name }} {{ consignor.middle_name or '' }}
-        </a>
-    </p>
-{% endif %}
+<h1>Акт приёма № {{ consignor_report.number }}</h1>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header font-weight-bold">
+                <i class="fas fa-file-import mr-1"></i> Реквизиты акта
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Дата:</strong> {{ consignor_report.date }}</p>
+                <p class="mb-2"><strong>Комиссия:</strong>
+                    {{ consignor_report.commission_pct }} % (не менее {{ consignor_report.commission_min }} ₽)
+                </p>
+                {% if consignor_report.description %}
+                <p class="mb-2"><strong>Описание:</strong> {{ consignor_report.description }}</p>
+                {% endif %}
+                {% if consignor %}
+                <p class="mb-0"><strong>Комитент:</strong>
+                    <a href="{{ url_for('consignor_detail', consignor_id=consignor.id, back='consignor_report', report_id=consignor_report.id) }}">
+                        {{ consignor.last_name }} {{ consignor.first_name }} {{ consignor.middle_name or '' }}
+                    </a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if consignor_report.products %}
+    {% set on_display = consignor_report.products | selectattr('status', 'eq', 'На витрине') | list %}
+    {% set sold       = consignor_report.products | selectattr('status', 'eq', 'Продан') | list %}
+    {% set returned   = consignor_report.products | selectattr('status', 'eq', 'Возвращён комитенту') | list %}
+    {% set total_sum  = consignor_report.products | sum(attribute='price') %}
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header font-weight-bold">
+                <i class="fas fa-chart-bar mr-1"></i> Итоги по акту
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="h4 font-weight-bold text-warning">{{ on_display | length }}</div>
+                        <div class="small text-muted">На витрине</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 font-weight-bold text-primary">{{ sold | length }}</div>
+                        <div class="small text-muted">Продано</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 font-weight-bold text-secondary">{{ returned | length }}</div>
+                        <div class="small text-muted">Возвращено</div>
+                    </div>
+                </div>
+                <hr>
+                <p class="mb-1"><strong>Всего товаров:</strong> {{ consignor_report.products | length }}</p>
+                <p class="mb-0"><strong>Сумма по акту:</strong> {{ total_sum }} ₽</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h4 class="mb-0">Товары по акту</h4>
+    <a href="{{ url_for('add_product', consignor_report_id=consignor_report.id) }}" class="btn btn-success btn-sm">
+        <i class="fas fa-plus"></i> Добавить товар
+    </a>
+</div>
 
 {% if consignor_report.products %}
-<h4 class="mt-4">Товары по акту</h4>
-{% else %}
-<p class="text-muted mt-4">Товары ещё не добавлены.</p>
-{% endif %}
-
-<a href="{{ url_for('add_product', consignor_report_id=consignor_report.id) }}" class="btn btn-success btn-sm mb-2">
-    <i class="fas fa-plus"></i> Добавить товар
-</a>
-
-{% if consignor_report.products %}
-<table class="table table-sm">
-    <thead>
+<table class="table table-sm table-hover no-datatable">
+    <thead class="thead-light">
         <tr>
             <th>Наименование</th>
             <th>Цена</th>
             <th>Дата доставки</th>
             <th>Срок реализации</th>
-            <th>Статус продажи</th>
+            <th>Статус товара</th>
         </tr>
     </thead>
     <tbody>
         {% for product in consignor_report.products %}
-        <tr>
-            <td>
-                <a href="{{ url_for('product_detail', product_id=product.id, back='consignor_report', report_id=consignor_report.id) }}">{{ product.product_name }}</a>
-            </td>
+        <tr class="clickable-row"
+            data-href="{{ url_for('product_detail', product_id=product.id, back='consignor_report', report_id=consignor_report.id) }}"
+            style="cursor: pointer;">
+            <td>{{ product.product_name }}</td>
             <td>{{ product.price }} ₽</td>
             <td>{{ product.delivery_date }}</td>
             <td>{{ product.expiry_date }}</td>
@@ -51,9 +96,14 @@
         {% endfor %}
     </tbody>
 </table>
+{% else %}
+<p class="text-muted">Товары ещё не добавлены.</p>
 {% endif %}
 
 <div class="mt-3">
+    <a href="{{ url_for('edit_consignor_report', consignor_report_id=consignor_report.id, back='detail') }}" class="btn btn-warning">
+        <i class="fas fa-edit"></i> Редактировать
+    </a>
     {% if request.args.get('back') == 'consignor' and request.args.get('consignor_id') %}
     <a href="{{ url_for('consignor_detail', consignor_id=request.args.get('consignor_id')) }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Назад к комитенту

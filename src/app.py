@@ -288,7 +288,7 @@ def delete_consignor(consignor_id):
 
 @app.route('/consignor_reports')
 def consignor_reports_list():
-    consignor_reports = ConsignorReport.query.all()
+    consignor_reports = ConsignorReport.query.order_by(ConsignorReport.date.desc()).all()
     consignors = Consignor.query.all()
     consignors_dict = {
         c.id: f"{c.last_name} {c.first_name} {c.middle_name or ''}".strip()
@@ -362,6 +362,8 @@ def edit_consignor_report(consignor_report_id):
             return render_template('consignor_reports/consignor_report_form.html',
                                    consignor_report=consignor_report, consignors=consignors)
         flash('Данные обновлены!', 'success')
+        if request.args.get('back') == 'detail':
+            return redirect(url_for('consignor_report_detail', consignor_report_id=consignor_report_id))
         return redirect(url_for('consignor_reports_list'))
 
     return render_template('consignor_reports/consignor_report_form.html',

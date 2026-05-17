@@ -57,6 +57,10 @@
         </div>
     </div>
     <button type="submit" class="btn btn-primary">{{ "Сохранить" if consignor_report else "Добавить" }}</button>
+    {% if consignor_report and request.args.get('back') == 'detail' %}
+    <a href="{{ url_for('consignor_report_detail', consignor_report_id=consignor_report.id) }}" class="btn btn-secondary">Отмена</a>
+    {% else %}
     <a href="{{ url_for('consignor_reports_list') }}" class="btn btn-secondary">Отмена</a>
+    {% endif %}
 </form>
 {% endblock %}
