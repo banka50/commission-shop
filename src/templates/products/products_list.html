@@ -71,21 +71,21 @@
             <td>
                 {{ product_status_badge(product.status) }}
             </td>
-            <td class="editable-cell"
-                data-field="category_id"
+            <td class="{% if not returned %}editable-cell{% endif %}"
+                {% if not returned %}data-field="category_id"
                 data-product-id="{{ product.id }}"
                 data-value="{{ product.category_id or '' }}"
-                data-display="{{ product.category.name if product.category else 'Без категории' }}">{{ product.category.name if product.category else 'Без категории' }}</td>
+                data-display="{{ product.category.name if product.category else 'Без категории' }}"{% endif %}>{{ product.category.name if product.category else 'Без категории' }}</td>
             <td>{{ product.description }}</td>
             <td>{{ product.delivery_date }}</td>
             <td class="{% if expired %}text-danger font-weight-bold{% elif expiring_soon %}text-warning font-weight-bold{% endif %}">
                 {% if expired %}<i class="fas fa-exclamation-circle mr-1"></i>{% elif expiring_soon %}<i class="fas fa-clock mr-1"></i>{% endif %}
                 {{ product.expiry_date }}
             </td>
-            <td class="editable-cell"
-                data-field="price"
+            <td class="{% if not returned %}editable-cell{% endif %}"
+                {% if not returned %}data-field="price"
                 data-product-id="{{ product.id }}"
-                data-value="{{ product.price }}">{{ product.price }} ₽</td>
+                data-value="{{ product.price }}"{% endif %}>{{ product.price }} ₽</td>
             <td>{{ consignor_reports[product.consignor_report_id] }}</td>
             <td>
                 {% if product.sales %}
